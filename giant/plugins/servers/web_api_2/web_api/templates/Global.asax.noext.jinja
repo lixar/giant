@@ -1,0 +1,24 @@
+{% import 'variables-webapi.jinja' as vars with context %}
+
+{{ (vars.api_name + '/Global.asax')|start_of_file -}}
+<%@ Application Codebehind="Global.asax.cs" Inherits="{{ vars.api_name }}.WebApiApplication" Language="C#" %>
+
+{{- (vars.api_name + '/Global.asax.cs')|start_of_file -}}
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Http;
+using System.Web.Routing;
+
+namespace {{ swagger.info.title|replace(' ', '') }}
+{
+    public class WebApiApplication : System.Web.HttpApplication
+    {
+        protected void Application_Start()
+        {
+            GlobalConfiguration.Configure(WebApiConfig.Register);
+        }
+    }
+}

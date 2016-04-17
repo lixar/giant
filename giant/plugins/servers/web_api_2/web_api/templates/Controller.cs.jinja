@@ -1,0 +1,42 @@
+{% import 'variables-webapi.jinja' as vars with context %}
+{% import 'example_response.jinja' as examples with context %}
+
+{% for controller in vars.controllers %}
+{{ (vars.api_name + '/Controllers/' + (controller|capitalize) + 'Controller')|start_of_file -}}
+
+{% set controller_operations = operations|controllers(controller) %}
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using System.Diagnostics;
+using {{ vars.api_name }}.Models;
+
+namespace {{ vars.api_name }}.Controllers
+{
+    public class {{ controller|capitalize }}Controller : ApiController
+    {
+        {% for operation_name, operation in controller_operations.iteritems() %}
+        {% if operation|controller_name != controller %}{% continue %}{% endif %}
+        {% set response_type = operation|return_type %}
+        [Route("{{ swagger.basePath[1:] }}{{ operation.path_name }}")]
+        [Http{{ operation.method|capitalize }}]
+        public {{ response_type }} {{ operation_name|camel_to_pascal }}({{ operation|parameters|join(',') }})
+        {
+            Debug.WriteLine("{{ controller|capitalize }}Controller :: {{ operation_name|camel_to_pascal }}");
+            {% if response_type != 'void' %}
+            
+            {{ examples.example_success_object(operation, 'responseObject')|indent(12) }}
+            return responseObject;
+            {% endif %}
+        }
+        {% if not loop.last %}{# add a newline. #}
+        
+        {% endif %}
+        {% endfor %}
+    }
+}
+{% endfor %}

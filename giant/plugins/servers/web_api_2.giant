@@ -1,0 +1,14 @@
+[Core]
+Name = Web API 2.0 Server
+Module = web_api_2/web_api
+
+[Documentation]
+Author = Sandy Chapman
+Version = 0.0.1
+Website = http://lixar.com
+Description = Web API Server Generator
+
+[Details]
+Type = Server
+Command = web-api-2
+Help = Generates a C# server using the Web API 2.0 framework.

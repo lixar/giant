@@ -1,0 +1,20 @@
+{% import 'variables-webapi.jinja' as vars with context %}
+
+{% for definition_name, definition in swagger.definitions.iteritems() %}
+{{ (vars.api_name + '/Models/' + definition_name)|start_of_file -}}
+
+using System.Runtime.Serialization;
+
+namespace {{ swagger.info.title|replace(' ', '') }}.Models
+{
+    [DataContract]
+    public class {{ definition_name }}
+    {
+        {% for property_name, property in definition.properties.iteritems() %}
+        [DataMember(Name = "{{ property_name }}")]
+        public {{ property|property_type }} {{ property_name|camel_to_pascal }} { get; set; }
+        {% endfor %}
+    }
+}
+
+{%- endfor %}

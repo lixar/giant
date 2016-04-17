@@ -1,0 +1,20 @@
+{% import 'variables-webapi.jinja' as vars with context %}
+
+{% for controller in vars.controllers %}
+{% set controller_operations = operations|controllers(controller) %}
+{% for operation_name, operation in controller_operations.iteritems() %}
+{% if 'application/x-www-form-urlencoded' not in operation.consumes %}{% continue %}{% endif %}
+{% set class_name = (operation_name + 'Request')|camel_to_pascal %}
+{{ (vars.api_name + '/Models/' + class_name)|start_of_file -}}
+
+namespace {{ vars.api_name }}.Models
+{
+    public class {{ class_name }}
+    {
+        {% for parameter in operation.parameters %}
+        public {{ parameter|parameter_type }} {{ parameter['name']|camel_to_pascal }} { get; set; }
+        {% endfor %}
+    }
+}
+{%- endfor %}
+{% endfor %}

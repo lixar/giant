@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+
+import argparse
+from giant import giant
+from giant.giant_base import GiantError
+from collections import defaultdict
+import logging
+import sys
+
+logging.basicConfig()
+
+class GiantExecutorParser(argparse.ArgumentParser):
+    
+    def error(self, message):
+        sys.stderr.write('\n*** ERROR: %s\n\n' % message)
+        self.print_help()
+        sys.stderr.write('\n')
+        sys.exit(2)
+
+
+class GiantExecutor(object):
+    
+    def parse(self):
+        self._parser = GiantExecutorParser(description='Generate code using OpenAPI Specs.')
+        self._subparsers = self._parser.add_subparsers(dest='command', help='Use "$ giant [command] --help" for more details on command usage.')
+        
+        self._common_parser = argparse.ArgumentParser(add_help=False)
+        self._common_parser.add_argument('-u', '--url', dest='swagger_url', required=False, type=str, help='The URL of the remote swagger file.')
+        self._common_parser.add_argument('-f', '--swagger-files', dest='swagger_files', required=False, nargs='+', type=str, help='The path of the local swagger file.')
+        self._common_parser.add_argument('-o', '--output_dir', dest='output_dir', required=False, default='./output', type=str, help='The output directory for generated files.')
+        
+        self._init_client_parser()
+        self._init_server_parser()
+        self._init_plugin_parser()
+        
+        self._args = self._parser.parse_args()
+        
+    def validate(self):
+        try:
+            command = {
+                'client': lambda: self._validate_client_parser(),
+                'server': lambda: self._validate_server_parser(),
+                'plugin': lambda: self._validate_plugin_parser(),
+            }[self._args.command]()
+        except GiantError as e:
+            self._get_selected_subparser().error(e.message)
+            sys.exit(1)
+        
+    def execute(self):
+        command = self._args.command
+        if command == 'client':
+            giant.generate_client(self._args, self._args.subcommand)
+        elif command == 'server':
+            giant.generate_server(self._args, self._args.subcommand)
+        elif command == 'plugin':
+            subcommand = self._args.subcommand
+            if subcommand == 'new':
+                giant.new_plugin(self._args)
+            elif subcommand == 'add':
+                giant.install_plugin(self._args)
+        
+    def _get_selected_subparser(self):
+        try:
+            command = self._args.command
+        except:
+            return self._parser
+        try:
+            subcommand = self._args.subcommand
+        except:
+            return {
+                'client': self._client_parser,
+                'server': self._server_parser,
+                'plugin': self._plugin_parser,
+            }[command].print_help()
+        return {
+            'client': self._client_subparsers,
+            'server': self._server_subparsers,
+            'plugin': self._plugin_subparsers,
+        }[command][subcommand]
+        
+        
+    def _init_server_parser(self):
+        self._server_parser = self._subparsers.add_parser('server', help='Generate a server.')
+        server_subparsers = self._server_parser.add_subparsers(dest='subcommand', help='Use "$ giant plugin [command] --help" for more details on command usage.')
+        self._server_subparsers = {}
+        for plugin in giant.get_server_plugins():
+            flag = plugin.details.get('Details', 'Command')
+            help_info = plugin.details.get('Details', 'Help')
+            self._server_subparsers[flag] = server_subparsers.add_parser(flag, help=help_info, parents=[] if not self._common_parser else [self._common_parser])
+
+    def _init_client_parser(self):
+        self._client_parser = self._subparsers.add_parser('client', help='Generate a client.')
+        client_subparsers = self._client_parser.add_subparsers(dest='subcommand', help='Use "$ giant plugin [command] --help" for more details on command usage.')
+        self._client_subparsers = {}
+        for plugin in giant.get_client_plugins():
+            flag = plugin.details.get('Details', 'Command')
+            help_info = plugin.details.get('Details', 'Help')
+            self._client_subparsers[flag] = client_subparsers.add_parser(flag, help=help_info, parents=[] if not self._common_parser else [self._common_parser])
+
+    def _init_plugin_parser(self):
+        self._plugin_parser = self._subparsers.add_parser('plugin', help='Perform plugin operations.')
+        plugin_subparsers = self._plugin_parser.add_subparsers(dest='subcommand', help='Use "$ giant plugin [command] --help" for more details on command usage.')
+        self._new_plugin_parser = plugin_subparsers.add_parser('new', help='Create a new plugin.')
+        self._new_plugin_parser.add_argument('-t', '--type', dest='type', required=True, type=str, choices=('server', 'client'), help='Whether the plugin will generate a Client or server')
+        self._new_plugin_parser.add_argument('-l', '--language', dest='language', required=True, type=str, help='The name of the language the plugin will generate.')
+        self._new_plugin_parser.add_argument('-f', '--framework', dest='framework', required=True, type=str, help='The name of the framework the plugin will work with.')
+        self._add_plugin_parser = plugin_subparsers.add_parser('add', help='Installs a plugin.')
+        self._add_plugin_parser.add_argument('-i', '--input', dest='input_plugin', required=True, type=str, help='The plugin directory.')
+        self._rm_plugin_parser = plugin_subparsers.add_parser('rm', help='Uninstalls a plugin.')
+        self._plugin_subparsers = {
+            'add': self._add_plugin_parser,
+            'rm': self._rm_plugin_parser,
+            'new': self._new_plugin_parser,
+        }
+
+    def _validate_common_parser(self):
+        if self._args.swagger_url == None and self._args.swagger_files == None:
+            raise GiantError('A swagger file or url must be specified.')
+        elif self._args.swagger_url != None and self._args.swagger_files != None:
+            logging.warn('Both a swagger file and url have been specified, default will use the local file.')
+
+    def _validate_client_parser(self):
+        # print('validate_client_parser')
+        self._validate_common_parser()
+        
+    def _validate_server_parser(self):
+        # print('validate_server_parser')
+        self._validate_common_parser()
+        
+    def _validate_plugin_parser(self):
+        # print('validate_plugin_parser')
+        pass
+        
+    
+def main():
+    executor = GiantExecutor()
+    executor.parse()
+    executor.validate()
+    executor.execute()
+    
+if __name__ == '__main__':
+    main()

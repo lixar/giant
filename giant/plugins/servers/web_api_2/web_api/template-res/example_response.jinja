@@ -1,0 +1,51 @@
+{% macro example_object(definition_name, definition, variable_name) %}
+var {{ variable_name }} = new {{ definition_name }}();
+{% for property_name, property in definition.properties.iteritems() -%}
+{{ variable_name }}.{{ property_name|camel_to_pascal }} = {{ example(property) }}
+{%- endfor %}
+{% endmacro %}
+
+{% macro example_array(schema, variable_name) %}
+var {{ variable_name }} = {{ schema|resolve_example_type }}
+{{ variable_name }}.Add(
+    {{ example(schema['items'])|indent }}
+);
+{% endmacro %}
+
+{% macro example_dictionary(schema, variable_name) %}
+/* TODO: Example Object Here. */
+{% endmacro %}
+
+{% macro example(schema) %}
+{% if '$ref' in schema %}
+{% set definition_name = schema['$ref'].split('/')[-1] %}
+new Func<{{ definition_name }}>(() => {
+    {{ example_object(definition_name, swagger.definitions[definition_name], 'example')|indent }}
+    return example;
+})()
+{% elif schema['type'] == 'array' %}
+new Func<>(() => {
+    {{ example_array(schema, 'example')|indent }}
+    return example;
+})()
+{% elif schema['type'] == 'object '%}
+new Func<>(() => {
+    {{ example_object(schema, 'example')|indent }}
+    return example;
+})()
+{% else %}
+{{ schema|example_primitive }}
+{% endif %}
+{% endmacro %}
+
+{% macro example_success_object(operation, variable_name) %}
+{% set response = operation|success_response %}
+{% if '$ref' in response.schema %}
+{% set definition_name = response.schema['$ref'].split('/')[-1] %}
+{{- example_object(definition_name, swagger.definitions[definition_name], variable_name) -}}
+{% elif response.schema.type == 'array' %}
+{{- example_array(response.schema, variable_name) -}}
+{% else %}
+var {{ variable_name }} = {{ response.schema|example_primitive }}
+{% endif %}
+{% endmacro %}

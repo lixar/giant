@@ -1,0 +1,16 @@
+{% import 'variables-webapi.jinja' as vars with context %}
+
+{{ (vars.api_name + '/App_Start/WebApiConfig')|start_of_file -}}
+
+using System.Web.Http;
+
+namespace {{ swagger.info.title|replace(' ', '') }}
+{
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            config.MapHttpAttributeRoutes();
+        }
+    }
+}
