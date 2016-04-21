@@ -58,6 +58,8 @@ class GiantExecutor(object):
                 giant.new_plugin(self._args)
             elif subcommand == 'add':
                 giant.install_plugin(self._args)
+            elif subcommand == 'rm':
+                giant.uninstall_plugin(self._args)
         
     def _get_selected_subparser(self):
         try:
@@ -106,7 +108,12 @@ class GiantExecutor(object):
         self._new_plugin_parser.add_argument('-f', '--framework', dest='framework', required=True, type=str, help='The name of the framework the plugin will work with.')
         self._add_plugin_parser = plugin_subparsers.add_parser('add', help='Installs a plugin.')
         self._add_plugin_parser.add_argument('-i', '--input', dest='input_plugin', required=True, type=str, help='The plugin directory.')
+        self._add_plugin_parser.add_argument('-s', '--symlink', dest='symlink', required=False, default=False, action='store_true', help='Symlink directory? If not specified, plugin will be copied into directory.')
         self._rm_plugin_parser = plugin_subparsers.add_parser('rm', help='Uninstalls a plugin.')
+        
+        plugin_names = [plugin.details.get('Details', 'Command') for plugin in giant.get_all_plugins()]
+        self._rm_plugin_parser.add_argument(dest='command_name', choices=plugin_names, help='The name of the plugin to uninstall.')
+            
         self._plugin_subparsers = {
             'add': self._add_plugin_parser,
             'rm': self._rm_plugin_parser,

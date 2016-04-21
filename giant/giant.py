@@ -65,19 +65,39 @@ class GiantCommands(object):
         import glob
         input_path = args.input_plugin
         plugin_file = glob.glob(input_path + '/*.giant')
-        with open(plugin_file, 'r') as plugin:
+        with open(plugin_file[0], 'r') as plugin:
             for line in plugin.readlines():
+                if line.startswith('Name'):
+                    plugin_name = line.split(' = ')[1].strip()
                 if line.startswith('Type'):
-                    plugin_type = line.split(' = ')[1]
-        path = os.path.abspath(giant.__package__)
+                    plugin_type = line.split(' = ')[1].strip()
+        
+        path = os.path.dirname(os.path.abspath(__file__))
         plugins_dir = os.path.join(path, 'plugins')
         plugins_dir = os.path.join(plugins_dir, plugin_type.lower())
-        if args.symlink:
-            os.symlink(args.input_plugin, plugins_dir)
-        else:
-            # Copy files to plugins_dir
-            # Update giant-1.0.0.dist-info/RECORD to have new files added.
+        try:
+            os.makedirs(plugins_dir)
+        except: 
             pass
+        plugins_dir = os.path.join(plugins_dir, plugin_name)
+        if args.symlink:
+            try:
+                import pdb; pdb.set_trace()
+                os.symlink(os.path.abspath(args.input_plugin), plugins_dir)
+            except:
+                logging.error('Plugin with this name already exists.')
+        else:
+            import shutil
+            shutil.copytree(os.path.abspath(args.input_plugin), plugins_dir)
+            # TODO Update giant-1.0.0.dist-info/RECORD to have new files added.
+        
+    def uninstall_plugin(self, args):
+        import shutil
+        plugin = self._get_plugin(args.command_name)
+        path = plugin.path
+        while not path.endswith('client') and not path.endswith('server'):
+            path, plugin_dirname = os.path.split(path)
+        shutil.rmtree(os.path.join(path, plugin_dirname))
         
     def get_client_plugins(self):
         if self.client_plugins == None:
@@ -88,6 +108,12 @@ class GiantCommands(object):
         if self.server_plugins == None:
             self.server_plugins = self._plugin_manager.getPluginsOfCategory(GiantCommands._server_category)
         return self.server_plugins
+        
+    def get_all_plugins(self):
+        return self.get_client_plugins() + self.get_server_plugins()
+        
+    def _get_plugin(self, command_name):
+        return next(plugin for plugin in self.get_all_plugins() if plugin.details.get('Details', 'Command') == command_name)
         
     def generate_client(self, args, name):
         plugin_info = next(plugin_info for plugin_info in self.client_plugins if plugin_info.details.get('Details', 'Command') == name)
