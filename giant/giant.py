@@ -82,7 +82,6 @@ class GiantCommands(object):
         plugins_dir = os.path.join(plugins_dir, plugin_name)
         if args.symlink:
             try:
-                import pdb; pdb.set_trace()
                 os.symlink(os.path.abspath(args.input_plugin), plugins_dir)
             except:
                 logging.error('Plugin with this name already exists.')
