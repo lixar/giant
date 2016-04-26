@@ -48,6 +48,7 @@ class GiantCommands(object):
             .replace('#', 'Sharp')
             .replace('+', 'Plus')
             .replace(' ', '')
+            .replace('-', '_')
             .replace('!', 'Exclamation')
             .replace('/', 'Slash')
             .replace('*', 'Star'))
