@@ -2,7 +2,7 @@
 
 from setuptools import setup
 setup(
-    name = "web_api",
+    name = "web_api_2",
     version = "1.0",
-    packages = ['web_api'],
+    packages = ['web_api_2'],
 )

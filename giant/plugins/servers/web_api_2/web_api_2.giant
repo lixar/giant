@@ -1,6 +1,6 @@
 [Core]
 Name = Web API 2.0 Server
-Module = web_api
+Module = web_api_2
 
 [Documentation]
 Author = Sandy Chapman
