@@ -77,6 +77,11 @@ def _parameter_type(parameter):
         return _resolve_type(parameter['schema'])
     return _swagger_to_csharp_map[parameter['type']][parameter.get('format')]
         
+def _get_parameter(param):
+    if '$ref' in param:
+        return swagger['parameters'][param['$ref'].split('/')[-1]]
+    return param
+        
 def _parameters(operation):
     all_params = []
     if 'parameters' not in operation:
@@ -86,14 +91,32 @@ def _parameters(operation):
         param_name = operation['operationId']
         all_params.append(param_type + ' ' + param_name)
     for param in operation['parameters']:
-        if '$ref' in param:
-            param = swagger['parameters'][param['$ref'].split('/')[-1]]
+        param = _get_parameter(param)
         if param['in'] == 'formData':
             continue
         param_name = param['name']
         param_type = _parameter_type(param)
         all_params.append(param_type + ' ' + param_name)
     return all_params
+    
+def _parameters_in(operation, locations):
+    all_params = []
+    if 'parameters' not in operation:
+        return all_params
+    for param in operation['parameters']:
+        param = _get_parameter(param)
+        if param['in'] not in locations and param['in'] != locations:
+            continue
+        param_name = param['name']
+        param_type = _parameter_type(param)
+        all_params.append(param_type + ' ' + param_name)
+    return all_params
+    
+def _body_paramerer(operation):
+    body_param = _parameters_in(operation, 'body')
+    if len(body_param) == 0:
+        return ''
+    return '[FromBody] ' + body_param[0]
 
 def _example_primitive(schema):
     if 'enum' in schema:
@@ -108,6 +131,8 @@ filters = (
     ('resolve_example_type', _resolve_example_type),
     ('parameter_type', _parameter_type),
     ('parameters', _parameters),
+    ('parameters_in', _parameters_in),
+    ('body_paramerer', _body_paramerer),
     ('success_response', _success_response),
     ('example_primitive', _example_primitive),
 )

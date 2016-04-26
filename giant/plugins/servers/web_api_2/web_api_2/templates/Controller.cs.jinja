@@ -22,9 +22,14 @@ namespace {{ vars.api_name }}.Controllers
         {% for operation_name, operation in controller_operations.iteritems() %}
         {% if operation|controller_name != controller %}{% continue %}{% endif %}
         {% set response_type = operation|return_type %}
+        {% set method_parameters = operation|parameters_in(['query', 'path']) %}
+        {% set body_param = operation|body_paramerer %}
+        {% if body_param != '' %}
+        {% set method_parameters = [body_param] + method_parameters %}
+        {% endif %}
         [Route("{{ swagger.basePath[1:] }}{{ operation.path_name }}")]
         [Http{{ operation.method|capitalize }}]
-        public {{ response_type }} {{ operation_name|camel_to_pascal }}({{ operation|parameters|join(',') }})
+        public {{ response_type }} {{ operation_name|camel_to_pascal }}({{ method_parameters|join(', ') }})
         {
             Debug.WriteLine("{{ controller|capitalize }}Controller :: {{ operation_name|camel_to_pascal }}");
             {% if response_type != 'void' %}
