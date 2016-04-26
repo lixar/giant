@@ -4,6 +4,7 @@
 {{ (vars.api_name + '/Models/' + definition_name)|start_of_file -}}
 
 using System.Runtime.Serialization;
+using System;
 
 namespace {{ swagger.info.title|replace(' ', '') }}.Models
 {
