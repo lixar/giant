@@ -1,0 +1,14 @@
+[Core]
+Name = objc_ios
+Module = objc_ios/objc_ios
+
+[Documentation]
+Author = Sandy Chapman
+Version = 0.0.0.1
+Website = 
+Description = Generates a objc project using the iOS framework.
+
+[Details]
+Type = Client
+Command = objc-ios
+Help = Generates a objc project using the iOS framework.

@@ -1,3 +1,4 @@
 
 {% set definitions = swagger['definitions'] %}
 {% set info = swagger['info'] %}
+{% set api_name = swagger.info.title|replace(' ', '') %}

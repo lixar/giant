@@ -1,0 +1,12 @@
+{% import 'variables.jinja' as vars with context %}
+{% import 'variables-ios.jinja' as ios with context %}
+{% for definition_name, definition in swagger.definitions.iteritems() %}
+{% set filename = vars.api_name + '/Models/' + definition_name %}
+{{ filename|start_of_file -}}
+{{- ios.file_header(definition_name) }}
+#import "{{ definition_name }}.h"
+
+@implementation {{ definition_name }}Model
+
+@end
+{%- endfor %}

@@ -1,0 +1,34 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/Api')|start_of_file -}}
+{{- ios.file_header('Api.m') }}
+#import "Api.h"
+#import <AFNetworking/AFNetworking.h>
+
+@implementation Api
+
++ (AFHTTPSessionManager*)httpClient
+{
+  static AFHTTPSessionManager* client = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"{{ swagger.schemes[0] }}://{{ swagger.host }}{{ swagger.basePath }}"]];
+  });
+  return client;
+} 
+{% for operation_name, operation in operations.iteritems() %}
++ (void){{ operation_name }}OnSuccess:(void(^)())onSuccess onFailure:(void(^)(NSError*))onFailure
+{
+    [Api.httpClient {{ operation.method|upper }}:@"{{ operation.path_name|template_string_in_af_format }}"
+             parameters:nil
+                {% if operation.method in ['get', 'post'] %}progress:nil{% endif %}
+                success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+                  onSuccess();
+                }
+                failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+                  onFailure(error);
+                }];
+}
+{% endfor %}
+@end
+

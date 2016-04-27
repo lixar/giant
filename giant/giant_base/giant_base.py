@@ -35,13 +35,20 @@ class BaseGiant(IPlugin):
         except:
             pass
         for template in self._main_loader.list_templates():
+            if os.path.split(template)[-1] == '.DS_Store':
+                continue
             if template.endswith('.jinja'):
                 self._populate_template(template)
             else:
                 import shutil
+                output_path = os.path.join(self.output_dir, template)
+                try:
+                    os.makedirs(os.path.split(output_path)[0])
+                except:
+                    pass
                 shutil.copyfile(
                     os.path.join(self._main_loader.searchpath[0], template),
-                    os.path.join(self.output_dir, template))
+                    output_path)
     
     def _get_loaders(self):
         common_loader = jinja2.PackageLoader('giant.giant_base', 'common')

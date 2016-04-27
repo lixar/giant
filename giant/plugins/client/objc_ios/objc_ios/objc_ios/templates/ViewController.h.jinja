@@ -1,0 +1,10 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/ViewController')|start_of_file -}}
+{{- ios.file_header('ViewController.h') }}
+#import <UIKit/UIKit.h>
+
+@interface ViewController : UIViewController
+
+@end
+

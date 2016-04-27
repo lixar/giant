@@ -1,0 +1,51 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/ViewController')|start_of_file -}}
+{{- ios.file_header('ViewController.m') }}
+#import "ViewController.h"
+#import "Api.h"
+
+@interface ViewController () <UITableViewDelegate, UITableViewDataSource>
+
+@end
+
+@implementation ViewController
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return {{ operations|length }};
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"OperationCell"];
+    switch(indexPath.row) {
+      {% for operation_name, operation in operations.iteritems() %}
+      case {{ loop.index - 1 }}:
+          cell.textLabel.text = @"{{ operation_name }}";
+          break;
+      {% endfor %}
+    }
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    switch(indexPath.row) {
+      {% for operation_name, operation in operations.iteritems() %}
+      case {{ loop.index - 1 }}:
+          [Api
+           {{ operation_name }}OnSuccess:^{
+               NSLog(@"Success!");
+           }
+           onFailure:^(NSError* error) {
+               NSLog(@"Failure! %@", error);
+           }];
+           break;
+      {% endfor %}
+    }
+}
+
+@end

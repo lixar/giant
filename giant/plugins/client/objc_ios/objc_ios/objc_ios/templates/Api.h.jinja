@@ -1,0 +1,11 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/Api')|start_of_file -}}
+{{- ios.file_header('Api.h') }}
+#import <Foundation/Foundation.h>
+
+@interface Api: NSObject
+{% for operation_name, operation in operations.iteritems() %}
++ (void){{ operation_name }}OnSuccess:(void(^)())onSuccess onFailure:(void(^)(NSError*))onFailure;
+{% endfor %}
+@end
