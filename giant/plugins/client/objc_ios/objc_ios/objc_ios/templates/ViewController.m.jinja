@@ -7,6 +7,8 @@
 
 @interface ViewController () <UITableViewDelegate, UITableViewDataSource>
 
+@property (nonatomic, weak) IBOutlet UITextView* logOutputView;
+
 @end
 
 @implementation ViewController
@@ -35,17 +37,30 @@
     
     switch(indexPath.row) {
       {% for operation_name, operation in operations.iteritems() %}
-      case {{ loop.index - 1 }}:
+      case {{ loop.index - 1 }}: {
+          [self log:@"Performing call: {{ operation_name }}"];
+          __weak ViewController* weakSelf = self;
           [Api
            {{ operation_name }}OnSuccess:^{
-               NSLog(@"Success!");
+               [weakSelf log:@"{{ operation_name }} Success!"];
            }
            onFailure:^(NSError* error) {
-               NSLog(@"Failure! %@", error);
+               [weakSelf log:[NSString stringWithFormat:@"{{ operation_name }} Failure! %@", error]];
            }];
            break;
+      }
+           
       {% endfor %}
     }
+}
+
+- (void)log:(NSString*)string
+{
+    NSDate* currentDate = [NSDate date];
+    NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.dateStyle = NSDateFormatterShortStyle;
+    self.logOutputView.text = [self.logOutputView.text stringByAppendingFormat:@"\n%@: %@", [formatter stringFromDate:currentDate], string];
 }
 
 @end
