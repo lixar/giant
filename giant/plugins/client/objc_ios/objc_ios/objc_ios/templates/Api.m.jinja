@@ -12,14 +12,18 @@
   static AFHTTPSessionManager* client = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"{{ swagger.schemes[0] }}://{{ swagger.host }}{{ swagger.basePath }}"]];
+    client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"{{ swagger.schemes[0] }}://{{ swagger.host }}"]];
   });
   return client;
 } 
 {% for operation_name, operation in operations.iteritems() %}
 + (void){{ operation_name }}OnSuccess:(void(^)())onSuccess onFailure:(void(^)(NSError*))onFailure
 {
-    [Api.httpClient {{ operation.method|upper }}:@"{{ operation.path_name|template_string_in_af_format }}"
+    NSString* path = @"{{ swagger.basePath }}{{ operation.path_name }}";
+    {% for param in operation|parameters_in('path') %}
+    path = [path stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|example_primitive }}];
+    {% endfor %}
+    [Api.httpClient {{ operation.method|upper }}:path
              parameters:nil
                 {% if operation.method in ['get', 'post'] %}progress:nil{% endif %}
                 success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {

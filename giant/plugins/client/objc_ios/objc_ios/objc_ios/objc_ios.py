@@ -30,8 +30,9 @@ class SwaggerPirate(BaseGiantClient):
         
     def filters(self):
         '''Call to allow plugin customization of available Jinja2 filters.'''
-        from .filters import filters
-        return filters
+        from . import filters
+        filters.swagger = self.swagger
+        return filters.filters
                 
     def tests(self):
         '''Call to allow plugin customization of available Jinja2 tests.'''
