@@ -17,17 +17,23 @@
   return client;
 } 
 {% for operation_name, operation in operations.iteritems() %}
-+ (void){{ operation_name }}OnSuccess:(void(^)())onSuccess onFailure:(void(^)(NSError*))onFailure
+{{ operation|objc_method_signature }}
 {
-    NSString* path = @"{{ swagger.basePath }}{{ operation.path_name }}";
+    NSString* path = @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
     {% for param in operation|parameters_in('path') %}
-    path = [path stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|example_primitive }}];
+    path = [path stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string }}];
     {% endfor %}
     [Api.httpClient {{ operation.method|upper }}:path
              parameters:nil
-                {% if operation.method in ['get', 'post'] %}progress:nil{% endif %}
+                {%- if operation.method in ['get', 'post'] %}
+                progress:nil
+                {%- endif %}
                 success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+                  {% if operation|response_type != '' -%}
+                  onSuccess(responseObject);
+                  {%- else -%}
                   onSuccess();
+                  {%- endif %}
                 }
                 failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
                   onFailure(error);

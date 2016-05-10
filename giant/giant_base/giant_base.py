@@ -91,6 +91,8 @@ class BaseGiant(IPlugin):
                         operations[method['operationId']]['parameters'].extend(path['parameters'])
                 except:
                     pass
+        for definition_name, definition in self.swagger['definitions'].iteritems():
+            definition['name'] = definition_name
         template_variables = {
             'swagger': self.swagger,
             'operations': operations,

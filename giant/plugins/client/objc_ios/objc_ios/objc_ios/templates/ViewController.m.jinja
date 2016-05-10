@@ -4,6 +4,9 @@
 {{- ios.file_header('ViewController.m') }}
 #import "ViewController.h"
 #import "Api.h"
+{% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+#import "{{ definition_name }}.h"
+{% endfor %}
 
 @interface ViewController () <UITableViewDelegate, UITableViewDataSource>
 
@@ -40,6 +43,18 @@
       case {{ loop.index - 1 }}: {
           [self log:@"Performing call: {{ operation_name }}"];
           __weak ViewController* weakSelf = self;
+          {% set success_block %}
+          {
+              [weakSelf log:@"{{ operation_name }} Success!"];
+          }
+          {% endset %}
+          {% set failure_block %}
+          {
+              [weakSelf log:[NSString stringWithFormat:@"{{ operation_name }} Failure! %@", error]];
+          }
+          {% endset %}
+          {{ operation|example_call(success_block, failure_block)}}
+          /*
           [Api
            {{ operation_name }}OnSuccess:^{
                [weakSelf log:@"{{ operation_name }} Success!"];
@@ -47,6 +62,7 @@
            onFailure:^(NSError* error) {
                [weakSelf log:[NSString stringWithFormat:@"{{ operation_name }} Failure! %@", error]];
            }];
+           */
            break;
       }
            

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from .casing import *
+
 _start_of_file_token = '<<<SOF:'
 
 swagger = None
@@ -30,11 +32,19 @@ def unique(items):
 def operation_consumes(operation):
     return operation.get('consumes', swagger['consumes'])
     
+def remove_trailing_slash(path):
+    if path.endswith('/'):
+        return path[:-1]
+    return path
+    
 filters = (
     ('camel_to_pascal', camel_to_pascal),
     ('start_of_file', start_of_file),
     ('controller_name', controller_name),
     ('controllers', controllers),
     ('unique', unique),
-    ('operation_consumes', operation_consumes)
+    ('operation_consumes', operation_consumes),
+    ('pascal_case', pascal_case),
+    ('camel_case', camel_case),
+    ('remove_trailing_slash', remove_trailing_slash),
 )

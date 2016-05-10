@@ -1,13 +1,13 @@
 {% import 'variables.jinja' as vars with context %}
 {% import 'variables-ios.jinja' as ios with context %}
-{% for definition_name, definition in swagger.definitions.iteritems() %}
+{% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}
 {{ (vars.api_name + '/Models/' + definition_name)|start_of_file -}}
 {{- ios.file_header(definition_name) }}
 #import <Foundation/Foundation.h>
 
 @interface {{ definition_name }}Model: NSObject
 {% for property_name, property in definition.properties.iteritems() %}
-@property (nonatomic, strong) {{ property|property_type }} {{ property_name }};
+@property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
 {%- endfor %}
 
 @end

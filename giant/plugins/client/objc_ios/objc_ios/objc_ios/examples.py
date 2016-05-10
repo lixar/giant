@@ -50,14 +50,14 @@ swagger_to_objc_example_map = {
     'string': defaultdict(lambda: lambda schema: '@"ExampleString"',
         {
             'guid': lambda schema: '@"ExampleString"',
-            'date': lambda schema: '[NSDate date];',
-            'date-time': lambda schema: '[NSDate date];',
+            'date': lambda schema: '[NSDate date]',
+            'date-time': lambda schema: '[NSDate date]',
             'byte': lambda schema: '@"ExampleString"',
             'binary': lambda schema: '@"ExampleString"',
-            'password': lambda schema: '"thepasswordispassword"'
+            'password': lambda schema: '@"thepasswordispassword"'
         }
     ),
-    'integer': defaultdict(lambda: lambda schema: str(example_integer(schema)),
+    'integer': defaultdict(lambda: lambda schema: "@" + str(example_integer(schema)),
         {
             'int32': lambda schema: "@" + str(example_integer(schema)),
             'int64': lambda schema: "@" + str(example_integer(schema))
@@ -69,5 +69,59 @@ swagger_to_objc_example_map = {
             'double': lambda schema: "@" + str(example_float(schema))
         }
     ),
-    'boolean': defaultdict(lambda: lambda schema: random.choice('YES', 'NO'))
+    'boolean': defaultdict(lambda: lambda schema: random.choice('YES', 'NO')),
+    'array': defaultdict(lambda: lambda schema: '@[]')
+}
+
+swagger_to_objc_example_string_map = {
+    'string': defaultdict(lambda: lambda schema: '@"ExampleString"',
+        {
+            'guid': lambda schema: '@"ExampleString"',
+            'date': lambda schema: '[NSDate date].iso8601;',
+            'date-time': lambda schema: '[NSDate date].iso8601;',
+            'byte': lambda schema: '@"ExampleString"',
+            'binary': lambda schema: '@"ExampleString"',
+            'password': lambda schema: '"thepasswordispassword"'
+        }
+    ),
+    'integer': defaultdict(lambda: lambda schema: "@(" + str(example_integer(schema)) + ').stringValue',
+        {
+            'int32': lambda schema: "@(" + str(example_integer(schema)) + ').stringValue',
+            'int64': lambda schema: "@(" + str(example_integer(schema)) + ').stringValue'
+        }
+    ),
+    'number': defaultdict(lambda: lambda schema: str(example_float(schema)) + '.stringValue',
+        {
+            'float': lambda schema: "@(" + str(example_float(schema)) + ').stringValue',
+            'double': lambda schema: "@(" + str(example_float(schema)) + ').stringValue'
+        }
+    ),
+    'boolean': defaultdict(lambda: lambda schema: '@(' + random.choice('YES', 'NO') + ').stringValue'),
+    'array': defaultdict(lambda: lambda schema: '@"[]"')
+}
+
+swagger_to_objc_string_map = {
+    'string': defaultdict(lambda: lambda schema, variable_name: variable_name,
+        {
+            'guid': lambda schema, variable_name: variable_name,
+            'date': lambda schema, variable_name: variable_name + '.iso8601;',
+            'date-time': lambda schema, variable_name: variable_name + '.iso8601;',
+            'byte': lambda schema, variable_name: variable_name,
+            'binary': lambda schema, variable_name: variable_name,
+            'password': lambda schema, variable_name: variable_name
+        }
+    ),
+    'integer': defaultdict(lambda: lambda schema, variable_name: variable_name + '.stringValue',
+        {
+            'int32': lambda schema, variable_name: variable_name + '.stringValue',
+            'int64': lambda schema, variable_name: variable_name + '.stringValue'
+        }
+    ),
+    'number': defaultdict(lambda: lambda schema, variable_name: variable_name + '.stringValue',
+        {
+            'float': lambda schema, variable_name: variable_name + '.stringValue',
+            'double': lambda schema, variable_name: variable_name + '.stringValue'
+        }
+    ),
+    'boolean': defaultdict(lambda: lambda schema, variable_name: variable_name +'.stringValue')
 }

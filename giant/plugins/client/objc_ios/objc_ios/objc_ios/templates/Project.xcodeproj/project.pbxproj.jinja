@@ -17,6 +17,11 @@
 		CE6BCEF61CD019B100B6ED29 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */; };
 		CE6BCEF81CD019B100B6ED29 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */; };
 		CE6BCEFB1CD019B100B6ED29 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF91CD019B100B6ED29 /* LaunchScreen.storyboard */; };
+    CEA622071CE111EA00CBA925 /* NSDate+ISO8601.m in Sources */ = {isa = PBXBuildFile; fileRef = CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */; };
+    {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+    {% set file_name = (definition_name + '.m') %}
+    {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
+    {% endfor %}
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +38,14 @@
 		CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE6BCEFA1CD019B100B6ED29 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CE6BCEFC1CD019B100B6ED29 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CEA622051CE111EA00CBA925 /* NSDate+ISO8601.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+ISO8601.h"; sourceTree = "<group>"; };
+		CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+ISO8601.m"; sourceTree = "<group>"; };
+    {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+    {% set file_name = (definition_name + '.h') %}
+		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ file_name }}; path = Models/{{ file_name }}; sourceTree = "<group>"; };
+    {% set file_name = (definition_name + '.m') %}
+		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = {{ file_name }}; path = Models/{{ file_name }}; sourceTree = "<group>"; };
+    {% endfor %}
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +78,7 @@
 		CE6BCEE71CD019B100B6ED29 /* {{ vars.api_name }} */ = {
 			isa = PBXGroup;
 			children = (
+				CEA622081CE20BCB00CBA925 /* Models */,
 				CE0201DF1CD03C05005FD7E4 /* Api.h */,
 				CE0201E01CD03C05005FD7E4 /* Api.m */,
 				CE6BCEEB1CD019B100B6ED29 /* AppDelegate.h */,
@@ -77,6 +91,8 @@
 				CE6BCEFC1CD019B100B6ED29 /* Info.plist */,
 				CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */,
 				CE6BCEE81CD019B100B6ED29 /* Supporting Files */,
+				CEA622051CE111EA00CBA925 /* NSDate+ISO8601.h */,
+				CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */,
 			);
 			path = "{{ vars.api_name }}";
 			sourceTree = "<group>";
@@ -87,6 +103,19 @@
 				CE6BCEE91CD019B100B6ED29 /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		CEA622081CE20BCB00CBA925 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+        {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+        {% set file_name = (definition_name + '.h') %}
+    		{{ file_name|file_ref_id }} /* {{ file_name }} */,
+        {% set file_name = (definition_name + '.m') %}
+    		{{ file_name|file_ref_id }} /* {{ file_name }} */,
+        {% endfor %}
+			);
+			name = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -160,10 +189,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE6BCEF61CD019B100B6ED29 /* DataModel.xcdatamodeld in Sources */,
+				CEA622071CE111EA00CBA925 /* NSDate+ISO8601.m in Sources */,
 				CE0201E11CD03C05005FD7E4 /* Api.m in Sources */,
 				CE6BCEF01CD019B100B6ED29 /* ViewController.m in Sources */,
 				CE6BCEED1CD019B100B6ED29 /* AppDelegate.m in Sources */,
 				CE6BCEEA1CD019B100B6ED29 /* main.m in Sources */,
+        {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+        {% set file_name = (definition_name + '.m') %}
+        {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */,
+        {% endfor %}
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

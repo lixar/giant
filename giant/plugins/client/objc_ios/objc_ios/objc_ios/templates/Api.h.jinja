@@ -4,8 +4,12 @@
 {{- ios.file_header('Api.h') }}
 #import <Foundation/Foundation.h>
 
+{% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
+@class {{ definition_name }}Model;
+{% endfor %}
+
 @interface Api: NSObject
 {% for operation_name, operation in operations.iteritems() %}
-+ (void){{ operation_name }}OnSuccess:(void(^)())onSuccess onFailure:(void(^)(NSError*))onFailure;
+{{ operation|objc_method_signature }};
 {% endfor %}
 @end
