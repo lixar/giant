@@ -119,7 +119,7 @@ def _definition_type(schema):
     if 'type' not in schema or schema['type'] == 'object':
         return '{}Model *'.format(schema['name'])
     elif schema['type'] == 'array':
-        return 'NSArray<{} *> *'.format(_example_definition(schema['items']))
+        return 'NSArray<{}> *'.format(_definition_type(schema['items']))
     else:
         return _property_type(schema)
         
@@ -143,7 +143,7 @@ def _example_primitive_string(schema):
 def _response_type(operation):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
-            return _property_type(response['schema'])
+            return _definition_type(response['schema'])
     return ''
             
 def _objc_method_signature(operation):
@@ -229,7 +229,9 @@ def _file_ref_id(definition_name):
     return _file_ref_ids[definition_name]
     
 def _objc_varname(variable_name):
-    if variable_name.startswith('new'):
+    illegal_prefix = lambda value: any(value.startswith(v) for v in ('new',))
+    illegal_value = lambda value: any(v == value for v in ('description',))
+    if illegal_value(variable_name) or illegal_prefix(variable_name):
         return 'the' + variable_name[0].upper() + variable_name[1:]
     return variable_name
     

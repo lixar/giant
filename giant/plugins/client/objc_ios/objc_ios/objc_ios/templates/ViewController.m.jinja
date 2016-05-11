@@ -4,6 +4,7 @@
 {{- ios.file_header('ViewController.m') }}
 #import "ViewController.h"
 #import "Api.h"
+#import <AFNetworking/AFNetworking.h>
 {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
 #import "{{ definition_name }}.h"
 {% endfor %}
@@ -34,6 +35,23 @@
     return cell;
 }
 
+- (void)logError:(NSError*)error operationName:(NSString*)operationName
+{
+    NSDictionary* data = error.userInfo;
+    NSURL* url = data[NSURLErrorFailingURLErrorKey];
+    NSString* reason = data[NSLocalizedDescriptionKey];
+    NSHTTPURLResponse* response = data[AFNetworkingOperationFailingURLResponseErrorKey];
+    NSData* responseData = error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey];
+    NSString* responseText = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
+    [self log:[NSString stringWithFormat:@"%@ Failure!\nURL: %@\nReason: %@\nResponse: %@\nBody: %@", 
+        operationName, url, reason, response, responseText]];
+}
+
+- (void)logSuccess:(id)response operationName:(NSString*)operationName
+{
+    [self log:[NSString stringWithFormat:@"%@ Success!", operationName]];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -45,24 +63,15 @@
           __weak ViewController* weakSelf = self;
           {% set success_block %}
           {
-              [weakSelf log:@"{{ operation_name }} Success!"];
+              [weakSelf logSuccess:nil operationName:@"{{ operation_name }} Success!"];
           }
           {% endset %}
           {% set failure_block %}
           {
-              [weakSelf log:[NSString stringWithFormat:@"{{ operation_name }} Failure! %@", error]];
+              [weakSelf logError:error operationName:@"{{ operation_name }}"];
           }
           {% endset %}
           {{ operation|example_call(success_block, failure_block)}}
-          /*
-          [Api
-           {{ operation_name }}OnSuccess:^{
-               [weakSelf log:@"{{ operation_name }} Success!"];
-           }
-           onFailure:^(NSError* error) {
-               [weakSelf log:[NSString stringWithFormat:@"{{ operation_name }} Failure! %@", error]];
-           }];
-           */
            break;
       }
            
