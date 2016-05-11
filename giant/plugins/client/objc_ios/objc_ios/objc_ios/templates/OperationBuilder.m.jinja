@@ -1,0 +1,33 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{%- for operation_name, operation in operations.iteritems() -%}
+{%- set operation_name = operation_name|pascal_case -%}
+{{ (vars.api_name + '/Operations/' + operation_name + 'OperationBuilder')|start_of_file -}}
+{{- ios.file_header(operation_name+'OperationBuilder.m') }}
+#import "{{ operation_name }}OperationBuilder.h"
+#import "{{ operation_name }}Operation.h"
+
+{%- set body_params = operation|parameters_in('body') %}
+{% if body_params|length > 0 %}
+@class {{ (body_params|first|parameter_type)[:-2] }};
+{% endif %}
+@implementation {{ operation_name }}OperationBuilder: NSObject
+
+- ({{ operation_name }}Operation *)build {
+    //! \todo Validate required parameters here.
+    return [[{{ operation_name }}Operation alloc] initWithBuilder:self];
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone
+{
+  {{ operation_name }}OperationBuilder* copy = [[self class] new];
+  {% if operation.parameters is not undefined %}
+  {% for param in operation.parameters -%}
+  copy.{{ (param|get_parameter).name|camel_case }} = self.{{ (param|get_parameter).name|camel_case }};
+  {% endfor %}
+  {%- endif %}
+  return copy;
+}
+
+@end
+{%- endfor -%}

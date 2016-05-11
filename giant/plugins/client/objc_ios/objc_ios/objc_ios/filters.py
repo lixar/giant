@@ -62,6 +62,34 @@ _swagger_to_xcdatamodel_map = {
     'boolean': defaultdict(lambda: 'Boolean'),
 }
 
+_swagger_to_objc_access_semantics_map = {
+    'string': defaultdict(lambda: 'copy',
+        {
+            'guid': 'copy',
+            'date': 'strong',
+            'date-time': 'strong',
+            'byte': 'copy',
+            'binary': 'copy',
+            'password': 'copy'
+        }
+    ),
+    'integer': defaultdict(lambda: 'strong',
+        {
+            'int32': 'strong',
+            'int64': 'strong'
+        }
+    ),
+    'number': defaultdict(lambda: 'strong',
+        {
+            'float': 'strong',
+            'double': 'strong'
+        }
+    ),
+    'boolean': defaultdict(lambda: 'strong'),
+    'array': defaultdict(lambda: 'copy'),
+    'object': defaultdict(lambda: 'copy'),
+}
+
 def _get_property(prop):
     if '$ref' in prop:
         return swagger['definitions'][prop['$ref'].split('/')[-1]]
@@ -242,6 +270,20 @@ def _type_to_string(param):
         schema = param
     return _examples.swagger_to_objc_string_map[schema['type']][schema.get('format')](schema, param['name'])
         
+def _objc_property(param):
+    param = _get_parameter(param)
+    property_template = '@property (nonatomic, {param_access_semantics}) {param_type} {param_name};'
+    if param['in'] == 'body':
+        param_access_semantics = 'strong'
+        param_type = _definition_type(param['schema'])
+    else:
+        param_access_semantics = _swagger_to_objc_access_semantics_map[param['type']][param.get('format')]
+        param_type = _parameter_type(param)
+    param_name = base_filters.camel_case(param['name'])
+    return property_template.format(
+        param_access_semantics=param_access_semantics, 
+        param_type=param_type, 
+        param_name=param_name)
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
@@ -256,7 +298,9 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('build_phase_file_id', _build_phase_file_id),
     ('file_ref_id', _file_ref_id),
     ('objc_varname', _objc_varname),
-    ('type_to_string', _type_to_string))
+    ('type_to_string', _type_to_string),
+    ('objc_property', _objc_property),
+    ('parameter_type', _parameter_type))
     
     
     

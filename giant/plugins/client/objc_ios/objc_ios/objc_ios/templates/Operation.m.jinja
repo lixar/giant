@@ -1,0 +1,213 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/Operations/Operation')|start_of_file -}}
+{{- ios.file_header('OperationBuilder.h') }}
+#import "Operation.h"
+#import <AFNetworking/AFNetworking.h>
+
+@implementation Operation
+
+- (void)execute
+{
+    AFHTTPRequestSerializer *serializer;
+    if(self.consumesJSON) {
+        serializer = self.class.jsonSerializer;
+    }
+    else {
+        serializer = self.class.httpSerializer;
+    }
+    
+    NSError *error;
+    
+    NSMutableURLRequest *request;
+    if(self.isMultipart) {
+        request = [serializer
+         multipartFormRequestWithMethod:self.method
+         URLString:self.URLString
+         parameters:self.parameters
+         constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+             //! \todo:: Implement this
+         }
+         error:&error];
+    }
+    else {
+        request = [serializer
+         requestWithMethod:self.method
+         URLString:self.URLString
+         parameters:self.parameters
+         error:&error];
+    }
+    
+    [self.class.httpSessionManager
+     dataTaskWithRequest:request
+     completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+         //! \todo:: This
+     }];
+}
+
++ (AFHTTPSessionManager*)httpSessionManager
+{
+    static AFHTTPSessionManager* client = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"http://localhost:10010"]];
+    });
+    return client;
+}
+
++ (AFHTTPRequestSerializer*)jsonSerializer
+{
+    
+    static AFJSONRequestSerializer* serializer = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        serializer = [AFJSONRequestSerializer serializer];
+    });
+    //! \todo Set defaults for this serializer.
+    return serializer;
+}
+
++ (AFHTTPRequestSerializer*)httpSerializer
+{
+    
+    static AFHTTPRequestSerializer* serializer = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        serializer = [AFHTTPRequestSerializer serializer];
+    });
+    //! \todo Set defaults for this serializer.
+    return serializer;
+}
+
++ (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)method
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)URLString
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSDictionary*)headers
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (id)parameters
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (BOOL)consumesJSON
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (BOOL)isMultipart
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+@end
+
+{%- for operation_name, operation in operations.iteritems() -%}
+{%- set operation_name = operation_name|pascal_case -%}
+{{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
+{{- ios.file_header(operation_name+'Operation.m') }}
+#import "{{ operation_name }}Operation.h"
+#import "{{ operation_name }}OperationBuilder.h"
+#import <AFNetworking/AFNetworking.h>
+
+@interface {{ operation_name }}Operation ()
+
+@property (nonatomic, copy) {{ operation_name }}OperationBuilder *builder;
+
+@end
+
+@implementation {{ operation_name }}Operation 
+
++ (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock
+{
+    {{ operation_name }}OperationBuilder *builder = [{{ operation_name }}OperationBuilder new];
+    builderBlock(builder);
+    return [builder build];
+}
+
+- (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder
+{
+    if((self = [super init]) == nil) return nil;
+    
+    _builder = [builder copy];
+    
+    return self;
+}
+
+- (NSString*)method
+{
+    return @"{{ operation.method|upper }}";
+}
+
+- (NSString*)URLString
+{
+    return @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
+}
+
+- (NSDictionary*)headers
+{
+    {%- set header_params = operation|parameters_in('header') %}
+    return @{
+    {%- for param in header_params %}
+        @"{{ param.name }}": self.builder.{{ param.name|camel_case }},
+    {% endfor -%}
+    };
+}
+
+- (id)parameters
+{
+    {%- set body_params = operation|parameters_in('body') %}
+    {%- set form_params = operation|parameters_in('formData') %}
+    {%- if body_params|length > 0 %}
+    return self.builder.{{ (body_params|first).name|camel_case }};
+    {%- elif form_params|length > 0 %}
+    return @{
+    {%- for param in form_params %}
+        @"{{ param.name }}": self.builder.{{ param.name|camel_case }},{% endfor %}
+    };
+    {%- else %}
+    return nil;
+    {%- endif %}
+}
+
+- (BOOL)consumesJSON
+{
+    {% if 'application/json' in operation.consumes -%}
+    return YES;
+    {%- else -%}
+    return NO;
+    {%- endif %}
+}
+
+- (BOOL)isMultipart
+{
+    {% if 'multipart/form-data' in operation.consumes -%}
+    return YES;
+    {%- else -%}
+    return NO;
+    {%- endif %}
+}
+
+@end
+{% endfor %}

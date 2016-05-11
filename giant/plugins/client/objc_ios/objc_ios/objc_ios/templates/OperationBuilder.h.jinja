@@ -1,0 +1,37 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/Operations/OperationBuilder')|start_of_file -}}
+{{- ios.file_header('OperationBuilder.h') }}
+#import <Foundation/Foundation.h>
+
+@class Operation;
+
+@protocol OperationBuilder <NSCopying>
+
+@required
+- (Operation *)build;
+
+@end
+
+{%- for operation_name, operation in operations.iteritems() -%}
+{%- set operation_name = operation_name|pascal_case -%}
+{{ (vars.api_name + '/Operations/' + operation_name + 'OperationBuilder')|start_of_file -}}
+{{- ios.file_header(operation_name+'OperationBuilder.h') }}
+#import "OperationBuilder.h"
+
+@class {{ operation_name }}Operation;
+
+{%- set body_params = operation|parameters_in('body') %}
+{%- if body_params|length > 0 %}
+@class {{ (body_params|first|parameter_type)[:-2] }};
+{%- endif %}
+
+@interface {{ operation_name }}OperationBuilder: NSObject <OperationBuilder>
+
+- ({{ operation_name }}Operation *)build;
+
+{% for param in operation.parameters -%}
+{{ param|objc_property }}
+{% endfor %}
+@end
+{%- endfor -%}

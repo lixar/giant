@@ -1,0 +1,44 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{- (vars.api_name + '/Operations/Operation')|start_of_file -}}
+{{- ios.file_header('Operation.h') }}
+#import <Foundation/Foundation.h>
+#import "OperationBuilder.h"
+
+@protocol OperationProtocol <NSObject>
+
++ (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock;
+
+@property (nonatomic, copy, readonly) NSString* method;
+@property (nonatomic, copy, readonly) NSString* URLString;
+@property (nonatomic, copy, readonly) NSDictionary* headers;
+@property (nonatomic, strong, readonly) id parameters;
+@property (nonatomic, assign, readonly) BOOL consumesJSON;
+@property (nonatomic, assign, readonly) BOOL isMultipart;
+
+@end
+
+@class AFHTTPSessionManager, AFHTTPRequestSerializer;
+
+@interface Operation: NSObject <OperationProtocol>
+
+- (void)execute;
+
+@end
+
+{%- for operation_name, operation in operations.iteritems() -%}
+{%- set operation_name = operation_name|pascal_case -%}
+{{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
+{{- ios.file_header(operation_name+'Operation.h') }}
+#import "Operation.h"
+
+@class {{ operation_name }}OperationBuilder;
+
+@interface {{operation_name}}Operation: Operation <OperationProtocol>
+
++ (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock;
+
+- (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder;
+
+@end
+{% endfor %}
