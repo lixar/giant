@@ -64,7 +64,11 @@
     
     __weak Operation* weakSelf = self;
     
-     self.task = [sessionManager
+    if(self.securityDefinition != nil) {
+        [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
+    }
+    
+    self.task = [sessionManager
      dataTaskWithRequest:request
      completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
          //! \todo:: This
@@ -110,6 +114,21 @@
     });
     //! \todo Set defaults for this serializer.
     return serializer;
+}
+
++ (NSMutableDictionary*)apiKeys
+{
+    static NSMutableDictionary* keys = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = [NSMutableDictionary dictionary];
+    });
+    return keys;
+}
+
++ (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName
+{
+    self.apiKeys[securityName] = token;
 }
 
 + (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock
@@ -302,6 +321,15 @@
     return YES;
     {%- else -%}
     return NO;
+    {%- endif %}
+}
+
+- (NSString*)securityDefinition
+{
+    {% if operation.security|length > 0 -%}
+    return @"{{ operation.security[0].keys()[0] }}";
+    {%- else -%}
+    return nil;
     {%- endif %}
 }
 

@@ -71,6 +71,9 @@
           __weak ViewController* weakSelf = self;
           operation.completionBlock = ^{
               if(operation.error == nil) {
+                  {% if 'x-provides-api-key' in operation -%}
+                  [Operation setApiKey:operation.responseObject[@"access_token"] forSecurityDefinition:@"{{ operation['x-provides-api-key'] }}"];
+                  {%- endif %}
                   [weakSelf logSuccess:nil operationName:@"{{ operation_name }}"];
               }
               else {
