@@ -5,9 +5,30 @@
 #import "Operation.h"
 #import <AFNetworking/AFNetworking.h>
 
+@interface Operation ()
+
+@property (atomic, strong) NSURLSessionDataTask *task;
+@property (nonatomic, getter = isFinished, readwrite)  BOOL finished;
+@property (nonatomic, getter = isExecuting, readwrite) BOOL executing;
+
+@end
+
 @implementation Operation
 
-- (void)execute
+@synthesize finished  = _finished;
+@synthesize executing = _executing;
+
+- (instancetype)init
+{
+    if((self = [super init]) == nil) return nil;
+    
+    _finished  = NO;
+    _executing = NO;
+    
+    return self;
+}
+
+- (void)setupDataTask
 {
     AFHTTPRequestSerializer *serializer;
     if(self.consumesJSON) {
@@ -17,13 +38,16 @@
         serializer = self.class.httpSerializer;
     }
     
+    AFHTTPSessionManager* sessionManager = self.class.httpSessionManager;
+    NSString* URLString = [NSURL URLWithString:self.URLString relativeToURL:sessionManager.baseURL].absoluteString;
+    
     NSError *error;
     
     NSMutableURLRequest *request;
     if(self.isMultipart) {
         request = [serializer
          multipartFormRequestWithMethod:self.method
-         URLString:self.URLString
+         URLString:URLString
          parameters:self.parameters
          constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
              //! \todo:: Implement this
@@ -33,15 +57,24 @@
     else {
         request = [serializer
          requestWithMethod:self.method
-         URLString:self.URLString
+         URLString:URLString
          parameters:self.parameters
          error:&error];
     }
     
-    [self.class.httpSessionManager
+    __weak Operation* weakSelf = self;
+    
+     self.task = [sessionManager
      dataTaskWithRequest:request
      completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
          //! \todo:: This
+         NSLog(@"Response: %@", response);
+         NSLog(@"ResponseObject: %@", responseObject);
+         NSLog(@"Error: %@", error);
+         weakSelf.error = error;
+         weakSelf.response = response;
+         weakSelf.responseObject = responseObject;
+         [weakSelf completeOperation];
      }];
 }
 
@@ -121,6 +154,68 @@
     return nil;
 }
 
+- (void)start {
+    if ([self isCancelled]) {
+        self.finished = YES;
+        return;
+    }
+    self.executing = YES;
+    [self main];
+}
+
+- (void)main {
+    [self.task resume];
+}
+
+- (void)cancel {
+    [self.task cancel];
+    [super cancel];
+}
+             
+- (void)completeOperation {
+    self.task = nil;
+    self.executing = NO;
+    self.finished  = YES;
+}
+
+#pragma mark - NSOperation methods
+
+- (BOOL)isAsynchronous {
+    return YES;
+}
+
+- (BOOL)isExecuting {
+    @synchronized(self) {
+        return _executing;
+    }
+}
+
+- (BOOL)isFinished {
+    @synchronized(self) {
+        return _finished;
+    }
+}
+
+- (void)setExecuting:(BOOL)executing {
+    if (_executing != executing) {
+        [self willChangeValueForKey:@"isExecuting"];
+        @synchronized(self) {
+            _executing = executing;
+        }
+        [self didChangeValueForKey:@"isExecuting"];
+    }
+}
+
+- (void)setFinished:(BOOL)finished {
+    [self willChangeValueForKey:@"isFinished"];
+    @synchronized(self) {
+        if (_finished != finished) {
+            _finished = finished;
+        }
+    }
+    [self didChangeValueForKey:@"isFinished"];
+}
+
 @end
 
 {%- for operation_name, operation in operations.iteritems() -%}
@@ -151,6 +246,7 @@
     if((self = [super init]) == nil) return nil;
     
     _builder = [builder copy];
+    [self setupDataTask];
     
     return self;
 }

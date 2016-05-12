@@ -20,9 +20,13 @@
 
 @class AFHTTPSessionManager, AFHTTPRequestSerializer;
 
-@interface Operation: NSObject <OperationProtocol>
+@interface Operation: NSOperation <OperationProtocol>
 
-- (void)execute;
+- (void)setupDataTask;
+
+@property (nonatomic, strong) NSError* error;
+@property (nonatomic, strong) NSURLResponse* response;
+@property (nonatomic, strong) id responseObject;
 
 @end
 
@@ -31,8 +35,7 @@
 {{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
 {{- ios.file_header(operation_name+'Operation.h') }}
 #import "Operation.h"
-
-@class {{ operation_name }}OperationBuilder;
+#import "{{ operation_name }}OperationBuilder.h"
 
 @interface {{operation_name}}Operation: Operation <OperationProtocol>
 

@@ -9,31 +9,31 @@ import string
 swagger = None
 
 _swagger_to_objc_map = {
-    'string': defaultdict(lambda: 'NSString*',
+    'string': defaultdict(lambda: 'NSString *',
         {
-            'guid': 'NSString*',
-            'date': 'NSDate*',
-            'date-time': 'NSDate*',
-            'byte': 'NSData*',
-            'binary': 'NSData*',
-            'password': 'NSString*'
+            'guid': 'NSString *',
+            'date': 'NSDate *',
+            'date-time': 'NSDate *',
+            'byte': 'NSData *',
+            'binary': 'NSData *',
+            'password': 'NSString *'
         }
     ),
-    'integer': defaultdict(lambda: 'NSNumber*',
+    'integer': defaultdict(lambda: 'NSNumber *',
         {
-            'int32': 'NSNumber*',
-            'int64': 'NSNumber*'
+            'int32': 'NSNumber *',
+            'int64': 'NSNumber *'
         }
     ),
-    'number': defaultdict(lambda: 'NSNumber*',
+    'number': defaultdict(lambda: 'NSNumber *',
         {
-            'float': 'NSNumber*',
-            'double': 'NSNumber*'
+            'float': 'NSNumber *',
+            'double': 'NSNumber *'
         }
     ),
-    'boolean': defaultdict(lambda: 'NSNumber*'),
-    'array': defaultdict(lambda: 'NSArray*'),
-    'object': defaultdict(lambda: 'NSDictionary*'),
+    'boolean': defaultdict(lambda: 'NSNumber *'),
+    'array': defaultdict(lambda: 'NSArray *'),
+    'object': defaultdict(lambda: 'NSDictionary *'),
 }
 
 _swagger_to_xcdatamodel_map = {
@@ -115,10 +115,10 @@ def _property_type(prop):
     return _swagger_to_objc_map[prop['type']][prop.get('format')]
     
 def _parameter_type(param):
-    param = _get_parameter(param)
-    if param['in'] == 'body':
-        return _definition_type(param['schema'])
-    return _swagger_to_objc_map[param['type']][param.get('format')]
+        param = _get_parameter(param)
+        if param['in'] == 'body':
+            return _definition_type(param['schema'])
+        return _swagger_to_objc_map[param['type']][param.get('format')]
     
 def _ios_datamodel_attribute_type(prop):
     return _swagger_to_xcdatamodel_map[prop['type']][prop.get('format')]
@@ -138,6 +138,7 @@ def _parameters_in(operation, in_types):
     return results
     
 def _example_parameter(param):
+    param = _get_parameter(param)
     if param['in'] == 'body':
         return _example_definition(param['schema'])
     return _example_primitive(param)
@@ -300,7 +301,8 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('objc_varname', _objc_varname),
     ('type_to_string', _type_to_string),
     ('objc_property', _objc_property),
-    ('parameter_type', _parameter_type))
+    ('parameter_type', _parameter_type),
+    ('example_parameter', _example_parameter))
     
     
     
