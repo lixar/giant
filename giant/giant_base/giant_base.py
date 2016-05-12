@@ -78,19 +78,34 @@ class BaseGiant(IPlugin):
         file_type = template_name.split('.')[-2]
         operations = {}
         for path_name, path in self.swagger['paths'].iteritems():
-            for method_name, method in path.items():
+            for method_name, method in filter(lambda item: item[0] in ['get', 'put', 'post', 'delete', 'options', 'head', 'patch'], path.items()):
                 try:
                     operations[method['operationId']] = dict(method.items() + {
                         'method': method_name,
                         'path_name': path_name,
                         'path': path
                     }.items())
-                    if 'parameters' not in operations[method['operationId']]:
-                        operations[method['operationId']]['parameters'] = path['parameters']
-                    else:
-                        operations[method['operationId']]['parameters'].extend(path['parameters'])
-                except:
-                    pass
+                    operation = operations[method['operationId']]
+                    
+                    if 'parameters' in operation and 'parameters' in path:
+                        operation['parameters'].extend(path['parameters'])
+                    elif 'parameters' in path:
+                        operation['parameters'] = path['parameters']
+                    elif 'parameters' not in operation:
+                        operation['parameters'] = []
+                        
+                    if 'consumes' not in operation:
+                        operation['consumes'] = self.swagger.get('consumes')
+                    if 'produces' not in operation:
+                        operation['produces'] = self.swagger.get('produces')
+                    if 'security' not in operation:
+                        if 'security' not in self.swagger:
+                            operation['security'] = []
+                        else:
+                            operation['security'] = self.swagger.get('security')
+                except StandardError as e:
+                    import pdb; pdb.set_trace()
+                    print(e)
         for definition_name, definition in self.swagger['definitions'].iteritems():
             definition['name'] = definition_name
         template_variables = {

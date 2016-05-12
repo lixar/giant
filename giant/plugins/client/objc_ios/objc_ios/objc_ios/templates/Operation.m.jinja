@@ -62,6 +62,10 @@
          error:&error];
     }
     
+    if(self.consumesJSON) {
+        [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    }
+    
     __weak Operation* weakSelf = self;
     
     if(self.securityDefinition != nil) {
@@ -168,6 +172,12 @@
 }
 
 - (BOOL)isMultipart
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)securityDefinition
 {
     [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
     return nil;
