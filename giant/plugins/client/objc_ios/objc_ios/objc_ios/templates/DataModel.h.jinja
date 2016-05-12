@@ -4,11 +4,14 @@
 {{ (vars.api_name + '/Models/' + definition_name)|start_of_file -}}
 {{- ios.file_header(definition_name) }}
 #import <Foundation/Foundation.h>
+#import "JSONable.h"
 
-@interface {{ definition_name }}Model: NSObject
+@interface {{ definition_name }}Model: NSObject <JSONable>
 {% for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
 {%- endfor %}
+
+- (NSDictionary*)toJSON;
 
 @end
 {%- endfor %}

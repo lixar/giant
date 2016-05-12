@@ -18,6 +18,7 @@
 		CE6BCEFB1CD019B100B6ED29 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF91CD019B100B6ED29 /* LaunchScreen.storyboard */; };
     CEA622071CE111EA00CBA925 /* NSDate+ISO8601.m in Sources */ = {isa = PBXBuildFile; fileRef = CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */; };
 		CE7764CA1CE38094005B1BE7 /* Operation.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7764C81CE38094005B1BE7 /* Operation.m */; };
+    CEAA10861CE5301300515F44 /* JSONable.m in Sources */ = {isa = PBXBuildFile; fileRef = CEAA10851CE5301300515F44 /* JSONable.m */; };
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
     {% set file_name = (definition_name + '.m') %}
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
@@ -47,6 +48,8 @@
 		CE7764C71CE38094005B1BE7 /* Operation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Operation.h; path = Operations/Operation.h; sourceTree = "<group>"; };
 		CE7764C81CE38094005B1BE7 /* Operation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Operation.m; path = Operations/Operation.m; sourceTree = "<group>"; };
 		CE7764C91CE38094005B1BE7 /* OperationBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OperationBuilder.h; path = Operations/OperationBuilder.h; sourceTree = "<group>"; };
+    CE7764F71CE4F4E0005B1BE7 /* JSONable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSONable.h; sourceTree = "<group>"; };
+    CEAA10851CE5301300515F44 /* JSONable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSONable.m; sourceTree = "<group>"; };
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
     {% set file_name = (definition_name + '.h') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ file_name }}; path = Models/{{ file_name }}; sourceTree = "<group>"; };
@@ -99,6 +102,8 @@
 			children = (
 				CEA622081CE20BCB00CBA925 /* Models */,
         CE77647D1CE37CA8005B1BE7 /* Operations */,
+				CE7764F71CE4F4E0005B1BE7 /* JSONable.h */,
+				CEAA10851CE5301300515F44 /* JSONable.m */,
 				CE6BCEEB1CD019B100B6ED29 /* AppDelegate.h */,
 				CE6BCEEC1CD019B100B6ED29 /* AppDelegate.m */,
 				CE6BCEEE1CD019B100B6ED29 /* ViewController.h */,
@@ -232,6 +237,7 @@
 				CE6BCEED1CD019B100B6ED29 /* AppDelegate.m in Sources */,
 				CE6BCEEA1CD019B100B6ED29 /* main.m in Sources */,
 				CE7764CA1CE38094005B1BE7 /* Operation.m in Sources */,
+				CEAA10861CE5301300515F44 /* JSONable.m in Sources */,
         {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
         {% set file_name = (definition_name + '.m') %}
         {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */,

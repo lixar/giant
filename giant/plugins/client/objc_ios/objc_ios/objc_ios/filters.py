@@ -155,15 +155,34 @@ def _definition_type(schema):
 def _example_definition(schema):
     schema = _get_schema(schema)
     if 'type' not in schema or schema['type'] == 'object':
-        return '[{}Model new]'.format(schema['name'])
+        if 'name' not in schema:
+            # nameless schemas are dictionaries.
+            model_template = '^{ NSMutableDictionary* model = [NSMutableDictionary dictionary]; '
+            for prop_name, prop in schema['properties'].iteritems():
+                prop_copy = dict(prop)
+                prop['name'] = prop_name
+                model_template = model_template + 'model[@"{prop_name}"] = {prop_example}; '.format(prop_name=prop_name, prop_example=_example_definition(prop))
+        else:
+            try:
+                model_template = '^{{ {schema_name}Model* model = [{schema_name}Model new]; '.format(schema_name=schema['name'])
+            except StandardError as e:
+                import pdb; pdb.set_trace()
+                print(e)
+            for prop_name, prop in schema['properties'].iteritems():
+                prop_copy = dict(prop)
+                prop['name'] = prop_name
+                model_template = model_template + 'model.{prop_name} = {prop_example}; '.format(prop_name=_objc_varname(base_filters.camel_case(prop_name)), prop_example=_example_definition(prop))
+        model_template = model_template + 'return model; }()'
+        return model_template
+        # return '[{}Model new]'.format(schema['name'])
     elif schema['type'] == 'array':
         return '@[{}]'.format(_example_definition(schema['items']))
     else:
         return _example_primitive(schema)
         
 def _example_primitive(schema):
-    # if 'enum' in schema:
-    #     return _examples.swagger_to_objc_enum_example_map[schema['type']][schema.get('format')](schema['enum'])
+    if 'enum' in schema:
+        return _examples.swagger_to_objc_enum_example_map[schema['type']][schema.get('format')](schema['enum'])
     return _examples.swagger_to_objc_example_map[schema['type']][schema.get('format')](schema)
     
 def _example_primitive_string(schema):
@@ -264,12 +283,14 @@ def _objc_varname(variable_name):
         return 'the' + variable_name[0].upper() + variable_name[1:]
     return variable_name
     
-def _type_to_string(param):
+def _type_to_string(param, variable_name):
+    if variable_name == None:
+        variable_name = param['name']
     if param['in'] == 'body':
         schema = _get_schema(param['schema'])
     else:
         schema = param
-    return _examples.swagger_to_objc_string_map[schema['type']][schema.get('format')](schema, param['name'])
+    return _examples.swagger_to_objc_string_map[schema['type']][schema.get('format')](schema, variable_name)
         
 def _objc_property(param):
     param = _get_parameter(param)

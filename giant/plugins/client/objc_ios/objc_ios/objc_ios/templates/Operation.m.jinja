@@ -4,6 +4,7 @@
 {{- ios.file_header('OperationBuilder.h') }}
 #import "Operation.h"
 #import <AFNetworking/AFNetworking.h>
+#import "JSONable.h"
 
 @interface Operation ()
 
@@ -31,11 +32,15 @@
 - (void)setupDataTask
 {
     AFHTTPRequestSerializer *serializer;
+    id parameters;
     if(self.consumesJSON) {
         serializer = self.class.jsonSerializer;
+        id<JSONable> jsonable = self.parameters;
+        parameters = [jsonable toJSON];
     }
     else {
         serializer = self.class.httpSerializer;
+        parameters = self.parameters;
     }
     
     AFHTTPSessionManager* sessionManager = self.class.httpSessionManager;
@@ -48,7 +53,7 @@
         request = [serializer
          multipartFormRequestWithMethod:self.method
          URLString:URLString
-         parameters:self.parameters
+         parameters:parameters
          constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
              //! \todo:: Implement this
          }
@@ -58,12 +63,18 @@
         request = [serializer
          requestWithMethod:self.method
          URLString:URLString
-         parameters:self.parameters
+         parameters:parameters
          error:&error];
     }
     
     if(self.consumesJSON) {
         [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    }
+    
+    if(self.headers != nil) {
+        for(NSString* key in self.headers) {
+            [request setValue:self.headers[key] forHTTPHeaderField:key];
+        }
     }
     
     __weak Operation* weakSelf = self;
@@ -287,7 +298,12 @@
 
 - (NSString*)URLString
 {
-    return @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
+    NSString* URLString = @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
+    {% for param in operation|parameters_in('path') -%}
+    {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname -%}
+    URLString = [URLString stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string(varname) }}];
+    {%- endfor %}
+    return URLString;
 }
 
 - (NSDictionary*)headers

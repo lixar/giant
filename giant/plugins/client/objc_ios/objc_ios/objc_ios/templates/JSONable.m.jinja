@@ -1,0 +1,62 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/JSONable')|start_of_file -}}
+{{- ios.file_header('JSONable.m') }}
+#import <Foundation/Foundation.h>
+#import "JSONable.h"
+#import "NSDate+ISO8601.h"
+
+@implementation NSDictionary (JSONable)
+
+- (id<JSONable>)toJSON;
+{
+    NSMutableDictionary* jsoned = [NSMutableDictionary dictionary];
+    for (NSString* key in self) {
+        id<JSONable> value = self[key];
+        jsoned[key] = [value toJSON];
+    }
+    return [jsoned copy];
+}
+
+@end
+
+@implementation NSArray (JSONable)
+
+- (id<JSONable>)toJSON;
+{
+    NSMutableArray* jsoned = [NSMutableArray array];
+    for (id<JSONable> value in self) {
+        [jsoned addObject:[value toJSON]];
+    }
+    return [jsoned copy];
+}
+
+@end
+
+@implementation NSDate (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.iso8601;
+}
+
+@end
+
+@implementation NSString (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self;
+}
+
+@end
+
+@implementation NSNumber (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self;
+}
+
+@end
+
