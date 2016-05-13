@@ -1,4 +1,7 @@
-package com.lixar.gianttemplate;
+{% import 'variables-android.jinja' as android with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (android.main_path + '/MainActivity')|start_of_file -}}
+package {{ android.package_root_name }};
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

@@ -1,4 +1,4 @@
-
+{% import 'variables.jinja' as vars with context %}
 {% macro file_header(filename) %}
 '''
  *
@@ -16,3 +16,10 @@
  * Copyright 2015 (c) Lixar I.T. Inc.
 '''
 {% endmacro %}
+
+{% set company_name = 'todo' %}
+{% set package_root_path = 'com/' + company_name + '/' + vars.api_name %}
+{% set package_root_name = 'com.' + company_name + '.' + vars.api_name %}
+{% set test_path = 'app/src/test/java/' + package_root_path %}
+{% set android_test_path = 'app/src/androidTest/java/' + package_root_path %}
+{% set main_path = 'app/src/main/java/' + package_root_path %}

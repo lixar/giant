@@ -1,3 +1,5 @@
+{% import 'variables-android.jinja' as android with context %}
+{% import 'variables.jinja' as vars with context %}
 apply plugin: 'com.android.application'
 
 android {
@@ -5,7 +7,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.lixar.gianttemplate"
+        applicationId "{{ android.package_root_name }}"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1

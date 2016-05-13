@@ -1,5 +1,8 @@
+{%- import 'variables-android.jinja' as android with context -%}
+{%- import 'variables.jinja' as vars with context -%}
+{{ (vars.api_name)|start_of_file -}}
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="GiantTemplate" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="{{ vars.api_name }}" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="java-gradle" name="Java-Gradle">
       <configuration>
