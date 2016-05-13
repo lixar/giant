@@ -5,8 +5,18 @@
 {{- ios.file_header(definition_name) }}
 #import <Foundation/Foundation.h>
 #import "JSONable.h"
+{% if 'x-persist' in definition and definition['x-persist'] -%}
+#import <Realm/Realm.h>
+#import "RealmPrimitives.h"
+{%- for property_name, property in definition.properties.iteritems() -%}
+{%- set prop_import = property|realm_property_import -%}
+{%- if prop_import is not none %}
+{{ prop_import }}
+{%- endif -%}
+{%- endfor -%}
+{%- endif %}
 
-@interface {{ definition_name }}Model: NSObject <JSONable>
+@interface {{ definition_name }}Model: {{ definition|model_base_type }} <JSONable>
 {% for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
 {%- endfor %}
@@ -14,4 +24,7 @@
 - (NSDictionary*)toJSON;
 
 @end
+{%- if 'x-persist' in definition and definition['x-persist'] %}
+RLM_ARRAY_TYPE({{ definition_name }}Model)
+{%- endif -%}
 {%- endfor %}

@@ -36,6 +36,59 @@ _swagger_to_objc_map = {
     'object': defaultdict(lambda: 'NSDictionary *'),
 }
 
+_swagger_to_realm_map = {
+    'string': defaultdict(lambda: 'NSString *',
+        {
+            'guid': 'NSString *',
+            'date': 'NSDate *',
+            'date-time': 'NSDate *',
+            'byte': 'NSData *',
+            'binary': 'NSData *',
+            'password': 'NSString *'
+        }
+    ),
+    'integer': defaultdict(lambda: 'NSNumber *',
+        {
+            'int32': 'NSNumber *',
+            'int64': 'NSNumber *'
+        }
+    ),
+    'number': defaultdict(lambda: 'NSNumber *',
+        {
+            'float': 'NSNumber *',
+            'double': 'NSNumber *'
+        }
+    ),
+    'boolean': defaultdict(lambda: 'NSNumber *'),
+    'array': defaultdict(lambda: 'RLMArray<{object_type}*><{object_type}> *'),
+}
+
+_swagger_to_realm_wrapper_map = {
+    'string': defaultdict(lambda: 'RealmString *',
+        {
+            'guid': 'RealmString *',
+            'date': 'RealmDate *',
+            'date-time': 'RealmDate *',
+            'byte': 'RealmData *',
+            'binary': 'RealmData *',
+            'password': 'RealmString *'
+        }
+    ),
+    'integer': defaultdict(lambda: 'RealmNumber *',
+        {
+            'int32': 'RealmNumber *',
+            'int64': 'RealmNumber *'
+        }
+    ),
+    'number': defaultdict(lambda: 'RealmNumber *',
+        {
+            'float': 'RealmNumber *',
+            'double': 'RealmNumber *'
+        }
+    ),
+    'boolean': defaultdict(lambda: 'RealmNumber *'),
+}
+
 _swagger_to_xcdatamodel_map = {
     'string': defaultdict(lambda: 'String',
         {
@@ -111,6 +164,21 @@ def _ios_attribute_optional(definition, property_name):
     return property_name in definition['required']
     
 def _property_type(prop):
+    if 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
+        prop = _get_property(prop)
+        if prop['type'] == 'object':
+            return prop['name'] + 'Model *'
+        value = _swagger_to_realm_map[prop['type']][prop.get('format')]
+        if prop['type'] == 'array':
+            if '$ref' in prop['items']:
+                return value.format(object_type=prop['items']['$ref'].split('/')[-1]+'Model')
+            items_prop = _get_property(prop['items'])
+            if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
+                items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]
+                return value.format(object_type=items_type)
+            else:
+                return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')]+'Model')
+        return value
     prop = _get_property(prop)
     return _swagger_to_objc_map[prop['type']][prop.get('format')]
     
@@ -121,7 +189,12 @@ def _parameter_type(param):
         return _swagger_to_objc_map[param['type']][param.get('format')]
     
 def _ios_datamodel_attribute_type(prop):
-    return _swagger_to_xcdatamodel_map[prop['type']][prop.get('format')]
+    try:
+        prop = _get_property(prop)
+        return _swagger_to_xcdatamodel_map[prop['type']][prop.get('format')]
+    except StandardError as e:
+        import pdb; pdb.set_trace()
+        print(e)
     
 def _template_string_in_af_format(string_value):
     import re
@@ -306,6 +379,22 @@ def _objc_property(param):
         param_access_semantics=param_access_semantics, 
         param_type=param_type, 
         param_name=param_name)
+        
+def _model_base_type(definition):
+    if 'x-persist' in definition:
+        return 'RLMObject'
+    else:
+        return 'NSObject'
+        
+def _realm_property_import(prop):
+    prop = _get_property(prop)
+    if prop['type'] == 'array':
+        prop = _get_property(prop['items'])
+        if 'name' in prop:
+            return '#import "{}.h"'.format(prop['name'])
+    elif prop['type'] == 'object':
+        return '#import "{}.h"'.format(prop['name'])
+    return None
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
@@ -323,7 +412,9 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('type_to_string', _type_to_string),
     ('objc_property', _objc_property),
     ('parameter_type', _parameter_type),
-    ('example_parameter', _example_parameter))
+    ('example_parameter', _example_parameter),
+    ('model_base_type', _model_base_type),
+    ('realm_property_import', _realm_property_import))
     
     
     

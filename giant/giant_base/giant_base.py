@@ -79,35 +79,36 @@ class BaseGiant(IPlugin):
         operations = {}
         for path_name, path in self.swagger['paths'].iteritems():
             for method_name, method in filter(lambda item: item[0] in ['get', 'put', 'post', 'delete', 'options', 'head', 'patch'], path.items()):
-                try:
-                    operations[method['operationId']] = dict(method.items() + {
-                        'method': method_name,
-                        'path_name': path_name,
-                        'path': path
-                    }.items())
-                    operation = operations[method['operationId']]
+                operations[method['operationId']] = dict(method.items() + {
+                    'method': method_name,
+                    'path_name': path_name,
+                    'path': path
+                }.items())
+                operation = operations[method['operationId']]
+                
+                if 'parameters' in operation and 'parameters' in path:
+                    operation['parameters'].extend(path['parameters'])
+                elif 'parameters' in path:
+                    operation['parameters'] = path['parameters']
+                elif 'parameters' not in operation:
+                    operation['parameters'] = []
                     
-                    if 'parameters' in operation and 'parameters' in path:
-                        operation['parameters'].extend(path['parameters'])
-                    elif 'parameters' in path:
-                        operation['parameters'] = path['parameters']
-                    elif 'parameters' not in operation:
-                        operation['parameters'] = []
-                        
-                    if 'consumes' not in operation:
-                        operation['consumes'] = self.swagger.get('consumes')
-                    if 'produces' not in operation:
-                        operation['produces'] = self.swagger.get('produces')
-                    if 'security' not in operation:
-                        if 'security' not in self.swagger:
-                            operation['security'] = []
-                        else:
-                            operation['security'] = self.swagger.get('security')
-                except StandardError as e:
-                    import pdb; pdb.set_trace()
-                    print(e)
+                if 'consumes' not in operation:
+                    operation['consumes'] = self.swagger.get('consumes')
+                if 'produces' not in operation:
+                    operation['produces'] = self.swagger.get('produces')
+                if 'security' not in operation:
+                    if 'security' not in self.swagger:
+                        operation['security'] = []
+                    else:
+                        operation['security'] = self.swagger.get('security')
+                    
         for definition_name, definition in self.swagger['definitions'].iteritems():
             definition['name'] = definition_name
+            if ('type' not in definition or definition['type'] == 'object') and 'properties' in definition:
+                for prop_name, prop in definition['properties'].iteritems():
+                    prop['definition'] = definition
+                
         template_variables = {
             'swagger': self.swagger,
             'operations': operations,
