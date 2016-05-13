@@ -1,3 +1,6 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/NSDate+ISO8601')|start_of_file -}}
 //
 //  NSDate+ISO8601.m
 //  Project

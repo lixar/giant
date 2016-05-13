@@ -1,0 +1,363 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/Operations/Operation')|start_of_file -}}
+{{- ios.file_header('OperationBuilder.h') }}
+#import "Operation.h"
+#import <AFNetworking/AFNetworking.h>
+#import "JSONable.h"
+
+@interface Operation ()
+
+@property (atomic, strong) NSURLSessionDataTask *task;
+@property (nonatomic, getter = isFinished, readwrite)  BOOL finished;
+@property (nonatomic, getter = isExecuting, readwrite) BOOL executing;
+
+@end
+
+@implementation Operation
+
+@synthesize finished  = _finished;
+@synthesize executing = _executing;
+
+- (instancetype)init
+{
+    if((self = [super init]) == nil) return nil;
+    
+    _finished  = NO;
+    _executing = NO;
+    
+    return self;
+}
+
+- (void)setupDataTask
+{
+    AFHTTPRequestSerializer *serializer;
+    id parameters;
+    if(self.consumesJSON) {
+        serializer = self.class.jsonSerializer;
+        id<JSONable> jsonable = self.parameters;
+        parameters = [jsonable toJSON];
+    }
+    else {
+        serializer = self.class.httpSerializer;
+        parameters = self.parameters;
+    }
+    
+    AFHTTPSessionManager* sessionManager = self.class.httpSessionManager;
+    NSString* URLString = [NSURL URLWithString:self.URLString relativeToURL:sessionManager.baseURL].absoluteString;
+    
+    NSError *error;
+    
+    NSMutableURLRequest *request;
+    if(self.isMultipart) {
+        request = [serializer
+         multipartFormRequestWithMethod:self.method
+         URLString:URLString
+         parameters:parameters
+         constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+             //! \todo:: Implement this
+         }
+         error:&error];
+    }
+    else {
+        request = [serializer
+         requestWithMethod:self.method
+         URLString:URLString
+         parameters:parameters
+         error:&error];
+    }
+    
+    if(self.consumesJSON) {
+        [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    }
+    
+    if(self.headers != nil) {
+        for(NSString* key in self.headers) {
+            [request setValue:self.headers[key] forHTTPHeaderField:key];
+        }
+    }
+    
+    __weak Operation* weakSelf = self;
+    
+    if(self.securityDefinition != nil) {
+        [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
+    }
+    
+    self.task = [sessionManager
+     dataTaskWithRequest:request
+     completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+         //! \todo:: This
+         NSLog(@"Response: %@", response);
+         NSLog(@"ResponseObject: %@", responseObject);
+         NSLog(@"Error: %@", error);
+         weakSelf.error = error;
+         weakSelf.response = response;
+         weakSelf.responseObject = responseObject;
+         [weakSelf completeOperation];
+     }];
+}
+
++ (AFHTTPSessionManager*)httpSessionManager
+{
+    static AFHTTPSessionManager* client = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"http://localhost:10010"]];
+    });
+    return client;
+}
+
++ (AFHTTPRequestSerializer*)jsonSerializer
+{
+    
+    static AFJSONRequestSerializer* serializer = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        serializer = [AFJSONRequestSerializer serializer];
+    });
+    //! \todo Set defaults for this serializer.
+    return serializer;
+}
+
++ (AFHTTPRequestSerializer*)httpSerializer
+{
+    
+    static AFHTTPRequestSerializer* serializer = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        serializer = [AFHTTPRequestSerializer serializer];
+    });
+    //! \todo Set defaults for this serializer.
+    return serializer;
+}
+
++ (NSMutableDictionary*)apiKeys
+{
+    static NSMutableDictionary* keys = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = [NSMutableDictionary dictionary];
+    });
+    return keys;
+}
+
++ (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName
+{
+    self.apiKeys[securityName] = token;
+}
+
++ (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)method
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)URLString
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSDictionary*)headers
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (id)parameters
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (BOOL)consumesJSON
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (BOOL)isMultipart
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSString*)securityDefinition
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (void)start {
+    if ([self isCancelled]) {
+        self.finished = YES;
+        return;
+    }
+    self.executing = YES;
+    [self main];
+}
+
+- (void)main {
+    [self.task resume];
+}
+
+- (void)cancel {
+    [self.task cancel];
+    [super cancel];
+}
+             
+- (void)completeOperation {
+    self.task = nil;
+    self.executing = NO;
+    self.finished  = YES;
+}
+
+#pragma mark - NSOperation methods
+
+- (BOOL)isAsynchronous {
+    return YES;
+}
+
+- (BOOL)isExecuting {
+    @synchronized(self) {
+        return _executing;
+    }
+}
+
+- (BOOL)isFinished {
+    @synchronized(self) {
+        return _finished;
+    }
+}
+
+- (void)setExecuting:(BOOL)executing {
+    if (_executing != executing) {
+        [self willChangeValueForKey:@"isExecuting"];
+        @synchronized(self) {
+            _executing = executing;
+        }
+        [self didChangeValueForKey:@"isExecuting"];
+    }
+}
+
+- (void)setFinished:(BOOL)finished {
+    [self willChangeValueForKey:@"isFinished"];
+    @synchronized(self) {
+        if (_finished != finished) {
+            _finished = finished;
+        }
+    }
+    [self didChangeValueForKey:@"isFinished"];
+}
+
+@end
+
+{%- for operation_name, operation in operations.iteritems() -%}
+{%- set operation_name = operation_name|pascal_case -%}
+{{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
+{{- ios.file_header(operation_name+'Operation.m') }}
+#import "{{ operation_name }}Operation.h"
+#import "{{ operation_name }}OperationBuilder.h"
+#import <AFNetworking/AFNetworking.h>
+
+@interface {{ operation_name }}Operation ()
+
+@property (nonatomic, copy) {{ operation_name }}OperationBuilder *builder;
+
+@end
+
+@implementation {{ operation_name }}Operation 
+
++ (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock
+{
+    {{ operation_name }}OperationBuilder *builder = [{{ operation_name }}OperationBuilder new];
+    builderBlock(builder);
+    return [builder build];
+}
+
+- (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder
+{
+    if((self = [super init]) == nil) return nil;
+    
+    _builder = [builder copy];
+    [self setupDataTask];
+    
+    return self;
+}
+
+- (NSString*)method
+{
+    return @"{{ operation.method|upper }}";
+}
+
+- (NSString*)URLString
+{
+    NSString* URLString = @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
+    {% for param in operation|parameters_in('path') -%}
+    {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname -%}
+    URLString = [URLString stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string(varname) }}];
+    {%- endfor %}
+    return URLString;
+}
+
+- (NSDictionary*)headers
+{
+    {%- set header_params = operation|parameters_in('header') %}
+    return @{
+    {%- for param in header_params %}
+        @"{{ param.name }}": self.builder.{{ param.name|camel_case }},
+    {% endfor -%}
+    };
+}
+
+- (id)parameters
+{
+    {%- set body_params = operation|parameters_in('body') %}
+    {%- set form_params = operation|parameters_in('formData') %}
+    {%- if body_params|length > 0 %}
+    return self.builder.{{ (body_params|first).name|camel_case }};
+    {%- elif form_params|length > 0 %}
+    return @{
+    {%- for param in form_params %}
+        @"{{ param.name }}": self.builder.{{ param.name|camel_case }},{% endfor %}
+    };
+    {%- else %}
+    return nil;
+    {%- endif %}
+}
+
+- (BOOL)consumesJSON
+{
+    {% if 'application/json' in operation.consumes -%}
+    return YES;
+    {%- else -%}
+    return NO;
+    {%- endif %}
+}
+
+- (BOOL)isMultipart
+{
+    {% if 'multipart/form-data' in operation.consumes -%}
+    return YES;
+    {%- else -%}
+    return NO;
+    {%- endif %}
+}
+
+- (NSString*)securityDefinition
+{
+    {% if operation.security|length > 0 -%}
+    return @"{{ operation.security[0].keys()[0] }}";
+    {%- else -%}
+    return nil;
+    {%- endif %}
+}
+
+@end
+{% endfor %}

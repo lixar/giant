@@ -3,10 +3,12 @@
 {{ (vars.api_name + '/ViewController')|start_of_file -}}
 {{- ios.file_header('ViewController.m') }}
 #import "ViewController.h"
-#import "Api.h"
 #import <AFNetworking/AFNetworking.h>
 {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
 #import "{{ definition_name }}.h"
+{% endfor %}
+{% for operation_name in operations -%}
+#import "{{ operation_name|pascal_case }}Operation.h"
 {% endfor %}
 
 @interface ViewController () <UITableViewDelegate, UITableViewDataSource>
@@ -26,11 +28,11 @@
 {
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"OperationCell"];
     switch(indexPath.row) {
-      {% for operation_name, operation in operations.iteritems() %}
-      case {{ loop.index - 1 }}:
-          cell.textLabel.text = @"{{ operation_name }}";
-          break;
-      {% endfor %}
+        {%- for operation_name, operation in operations.iteritems() %}
+        case {{ loop.index - 1 }}:
+            cell.textLabel.text = @"{{ operation_name }}";
+            break;
+        {%- endfor %}
     }
     return cell;
 }
@@ -57,37 +59,47 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     switch(indexPath.row) {
-      {% for operation_name, operation in operations.iteritems() %}
-      case {{ loop.index - 1 }}: {
-          [self log:@"Performing call: {{ operation_name }}"];
-          __weak ViewController* weakSelf = self;
-          {% set success_block %}
-          {
-              [weakSelf logSuccess:nil operationName:@"{{ operation_name }} Success!"];
-          }
-          {% endset %}
-          {% set failure_block %}
-          {
-              [weakSelf logError:error operationName:@"{{ operation_name }}"];
-          }
-          {% endset %}
-          {{ operation|example_call(success_block, failure_block)}}
-           break;
-      }
-           
-      {% endfor %}
+        {%- for operation_name, operation in operations.iteritems() %}
+        
+        case {{ loop.index - 1 }}: {
+            __block {{ operation_name|pascal_case }}Operation* operation = [{{ operation_name|pascal_case }}Operation operationWithBuilderBlock:^({{ operation_name|pascal_case }}OperationBuilder *builder) {
+                {%- if operation.parameters is not undefined -%}
+                {%- for param in operation.parameters %}
+                builder.{{ (param|get_parameter).name|camel_case }} = {{ param|example_parameter }};
+                {%- endfor %}
+                {%- endif %}
+            }];
+            __weak ViewController* weakSelf = self;
+            operation.completionBlock = ^{
+                if(operation.error == nil) {
+                    {%- if 'x-provides-api-key' in operation -%}
+                    [Operation setApiKey:operation.responseObject[@"access_token"] forSecurityDefinition:@"{{ operation['x-provides-api-key'] }}"];
+                    {%- endif %}
+                    [weakSelf logSuccess:nil operationName:@"{{ operation_name }}"];
+                }
+                else {
+                    [weakSelf logError:operation.error operationName:@"{{ operation_name }}"];
+                }
+                operation = nil;
+            };
+            [operation start];
+            break;
+        }
+        {%- endfor %}
     }
 }
 
 - (void)log:(NSString*)string
 {
-    NSDate* currentDate = [NSDate date];
-    NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
-    formatter.timeStyle = NSDateFormatterShortStyle;
-    formatter.dateStyle = NSDateFormatterShortStyle;
-    self.logOutputView.text = [self.logOutputView.text stringByAppendingFormat:@"\n%@: %@", [formatter stringFromDate:currentDate], string];
-    NSRange range = NSMakeRange(self.logOutputView.text.length - 1, 1);
-    [self.logOutputView scrollRangeToVisible:range];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSDate* currentDate = [NSDate date];
+        NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
+        formatter.timeStyle = NSDateFormatterShortStyle;
+        formatter.dateStyle = NSDateFormatterShortStyle;
+        self.logOutputView.text = [self.logOutputView.text stringByAppendingFormat:@"\n%@: %@", [formatter stringFromDate:currentDate], string];
+        NSRange range = NSMakeRange(self.logOutputView.text.length - 1, 1);
+        [self.logOutputView scrollRangeToVisible:range];
+    });
 }
 
 @end

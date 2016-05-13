@@ -1,12 +1,21 @@
 {% import 'variables.jinja' as vars with context %}
 {% import 'variables-ios.jinja' as ios with context %}
-{% for definition_name, definition in swagger.definitions.iteritems() %}
+{% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}
 {% set filename = vars.api_name + '/Models/' + definition_name %}
 {{ filename|start_of_file -}}
 {{- ios.file_header(definition_name) }}
 #import "{{ definition_name }}.h"
 
 @implementation {{ definition_name }}Model
+
+- (NSDictionary*)toJSON
+{
+  return @{
+      {% for property_name, property in definition.properties.iteritems() %}
+      @"{{ property_name }}": [self.{{ property_name|camel_case|objc_varname }} toJSON],
+      {% endfor %}
+  };
+}
 
 @end
 {%- endfor %}

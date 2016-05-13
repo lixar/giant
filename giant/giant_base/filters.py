@@ -37,6 +37,21 @@ def remove_trailing_slash(path):
         return path[:-1]
     return path
     
+def get_property(prop):
+    if '$ref' in prop:
+        return swagger['definitions'][prop['$ref'].split('/')[-1]]
+    return prop
+    
+def get_parameter(param):
+    if '$ref' in param:
+        return swagger['parameters'][param['$ref'].split('/')[-1]]
+    return param
+    
+def get_schema(schema):
+    if '$ref' in schema:
+        return swagger['definitions'][schema['$ref'].split('/')[-1]]
+    return schema
+    
 filters = (
     ('camel_to_pascal', camel_to_pascal),
     ('start_of_file', start_of_file),
@@ -47,4 +62,7 @@ filters = (
     ('pascal_case', pascal_case),
     ('camel_case', camel_case),
     ('remove_trailing_slash', remove_trailing_slash),
+    ('get_property', get_property),
+    ('get_parameter', get_parameter),
+    ('get_schema', get_schema),
 )

@@ -1,0 +1,17 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/JSONable')|start_of_file -}}
+{{- ios.file_header('JSONable.h') }}
+#import <Foundation/Foundation.h>
+
+@protocol JSONable <NSObject>
+
+- (id<JSONable>)toJSON;
+
+@end
+
+@interface NSDictionary (JSONable) <JSONable> @end
+@interface NSArray (JSONable) <JSONable> @end
+@interface NSDate (JSONable) <JSONable> @end
+@interface NSString (JSONable) <JSONable> @end
+@interface NSNumber (JSONable) <JSONable> @end

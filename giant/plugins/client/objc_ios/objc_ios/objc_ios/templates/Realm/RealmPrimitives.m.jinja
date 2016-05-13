@@ -1,0 +1,57 @@
+{% import 'variables-ios.jinja' as ios with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (vars.api_name + '/RealmPrimitives')|start_of_file -}}
+{{- ios.file_header('RealmPrimitives.m') -}}
+
+#import "NSDate+ISO8601.h"
+#import "RealmPrimitives.h"
+
+@implementation RealmString @end
+
+@implementation RealmNumber @end
+
+@implementation RealmDate @end
+
+@implementation RealmData @end
+
+@implementation RealmDate (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value.iso8601;
+}
+
+@end
+
+@implementation RealmString (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value;
+}
+
+@end
+
+@implementation RealmNumber (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value;
+}
+
+@end
+
+@implementation RLMArray (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    NSMutableArray* jsoned = [NSMutableArray array];
+    
+    for(id<JSONable> jsonable in self) {
+        [jsoned addObject:[jsonable toJSON]];
+    }
+    
+    return [jsoned copy];
+}
+
+@end
