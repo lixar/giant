@@ -1,0 +1,36 @@
+{% import 'variables-android.jinja' as android with context %}
+{% import 'variables.jinja' as vars with context %}
+{%- for operation_name, operation in operations.iteritems() -%}
+{% set class_name = (operation_name|pascal_case)%}
+{{ (android.main_path + '/operation/' + class_name)|start_of_file -}}
+package {{ android.package_root_name }}.operation;
+
+import retrofit2.Call;
+import retrofit2.http.*;
+import org.threeten.bp.OffsetDateTime;
+import java.util.ArrayList;
+import {{ android.package_root_name }}.datamodel.*;
+
+public interface {{ class_name }} {
+  
+    {% set path_params = operation|parameters_in('path')|android_path_params -%}
+    {%- set query_params = operation|parameters_in('query')|android_query_params -%}
+    {%- set body_params = operation|parameters_in('body')|android_body_params -%}
+    {%- set header_params = operation|parameters_in('header')|android_header_params -%}
+    
+    {%- if 'application/x-www-form-urlencoded' in operation.consumes -%}
+    {%- set form_params = operation|parameters_in('formData')|android_form_params -%}
+    @FormUrlEncoded
+    {% elif 'multipart/form-data' in operation.consumes -%}
+    {%- set form_params = operation|parameters_in('formData')|android_multipart_params -%}
+    @Multipart
+    {% else -%}
+    {%- set form_params = [] -%}
+    {%- endif -%}
+    
+    {%- set all_params = (path_params + query_params + body_params + form_params + header_params)|join(', ') -%}
+    
+    @{{ operation.method|upper }}("{{ operation.path_name }}")
+    Call<AuthenticationResponse> {{ operation_name|camel_case }}({{ all_params }});
+}
+{% endfor %}

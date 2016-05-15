@@ -1,0 +1,19 @@
+
+{% import 'variables-example.jinja' as vars with context %}
+{{ vars.file_header('example.py') }}
+
+# {{ generated_citation }}
+
+#!/usr/bin/env python
+
+from flask import Flask
+app = Flask(__name__)
+
+{% for operation_name, operation in operations.iteritems() %}
+@app.route('{{ operation.path_name }}', methods=['{{ operation.method|upper }}'])
+def {{ operation_name }}(*args, **kwargs):
+    return '{{ operation_name }}'
+{% endfor %}
+
+if __name__ == "__main__":
+    app.run()

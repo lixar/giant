@@ -99,21 +99,8 @@ def _parameters(operation):
         all_params.append(param_type + ' ' + param_name)
     return all_params
     
-def _parameters_in(operation, locations):
-    all_params = []
-    if 'parameters' not in operation:
-        return all_params
-    for param in operation['parameters']:
-        param = _get_parameter(param)
-        if param['in'] not in locations and param['in'] != locations:
-            continue
-        param_name = param['name']
-        param_type = _parameter_type(param)
-        all_params.append(param_type + ' ' + param_name)
-    return all_params
-    
 def _body_paramerer(operation):
-    body_param = _parameters_in(operation, 'body')
+    body_param = base_filters.parameters_in(operation, 'body')
     if len(body_param) == 0:
         return ''
     return '[FromBody] ' + body_param[0]
@@ -131,7 +118,6 @@ filters = (
     ('resolve_example_type', _resolve_example_type),
     ('parameter_type', _parameter_type),
     ('parameters', _parameters),
-    ('parameters_in', _parameters_in),
     ('body_paramerer', _body_paramerer),
     ('success_response', _success_response),
     ('example_primitive', _example_primitive),
