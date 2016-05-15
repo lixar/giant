@@ -23,11 +23,3 @@
 {% set test_path = 'app/src/test/java/' + package_root_path %}
 {% set android_test_path = 'app/src/androidTest/java/' + package_root_path %}
 {% set main_path = 'app/src/main/java/' + package_root_path %}
-
-{# Produces the set of all controllers in the swagger file. #}
-{% set controllers = [] %}
-{% for operation_name, operation in operations.iteritems() %}
-{% do controllers.append(operation|controller_name) %}
-{% endfor %}
-{% set controllers = controllers|unique %}
-{% do controllers.append('giant') %}

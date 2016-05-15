@@ -1,6 +1,8 @@
 {% import 'variables-android.jinja' as android with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (android.main_path + '/operation/' + vars.api_name)|start_of_file -}}
+{% for controller_name, controller in controllers.iteritems() %}
+{%- set class_name = controller_name|pascal_case + 'Service' %}
+{{ (android.main_path + '/operation/' + class_name)|start_of_file -}}
 package {{ android.package_root_name }}.operation;
 
 import retrofit2.Call;
@@ -9,9 +11,10 @@ import org.threeten.bp.OffsetDateTime;
 import java.util.ArrayList;
 import {{ android.package_root_name }}.datamodel.*;
 
-public interface {{ vars.api_name }} {
+public interface {{ class_name }} {
   
-    {%- for operation_name, operation in operations.iteritems() %}
+    {%- for operation in controller %}
+    {%- set operation_name = operation.operationId %}
     
     {% set path_params = operation|parameters_in('path')|android_path_params -%}
     {%- set query_params = operation|parameters_in('query')|android_query_params -%}
@@ -34,3 +37,4 @@ public interface {{ vars.api_name }} {
     Call<AuthenticationResponse> {{ operation_name|camel_case }}({{ all_params }});
     {%- endfor %}
 }
+{% endfor %}
