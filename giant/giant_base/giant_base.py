@@ -113,6 +113,9 @@ class BaseGiant(IPlugin):
                     else:
                         operation['security'] = self.swagger.get('security')
                     
+                for index, param in enumerate(operation['parameters']):
+                    if '$ref' in param:
+                        operation['parameters'][index] = self.swagger['parameters'][param['$ref'].split('/')[-1]]
         for definition_name, definition in self.swagger['definitions'].iteritems():
             definition['name'] = definition_name
             if ('type' not in definition or definition['type'] == 'object') and 'properties' in definition:

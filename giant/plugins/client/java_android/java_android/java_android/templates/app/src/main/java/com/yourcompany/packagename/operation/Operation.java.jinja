@@ -34,7 +34,7 @@ public interface {{ class_name }} {
     {%- set all_params = (path_params + query_params + body_params + form_params + header_params)|join(', ') -%}
     
     @{{ operation.method|upper }}("{{ operation.path_name }}")
-    Call<AuthenticationResponse> {{ operation_name|camel_case }}({{ all_params }});
+    Call<{{ operation|android_response_type }}> {{ operation_name|camel_case }}({{ all_params }});
     {%- endfor %}
 }
 {% endfor %}
