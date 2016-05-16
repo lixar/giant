@@ -21,7 +21,8 @@ public interface {{ class_name }} {
     {%- set body_params = operation|parameters_in('body')|android_body_params -%}
     {%- set header_params = operation|parameters_in('header')|android_header_params -%}
     
-    {%- if 'application/x-www-form-urlencoded' in operation.consumes -%}
+    @Headers("Operation-Name: {{ operation_name }}")
+    {% if 'application/x-www-form-urlencoded' in operation.consumes -%}
     {%- set form_params = operation|parameters_in('formData')|android_form_params -%}
     @FormUrlEncoded
     {% elif 'multipart/form-data' in operation.consumes -%}

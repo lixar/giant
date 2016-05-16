@@ -155,6 +155,18 @@ def _android_example_value(param):
         )
     return _swagger_to_example_map[param['type']][param.get('format')]
 
+def _android_property_type(param):
+    if '$ref' in param:
+        return param['$ref'].split('/')[-1]
+    if param['type'] == 'array':
+        return 'ArrayList<{item_type}>'.format(
+            item_type=_android_property_type(param['items'])
+        )
+    if param['type'] == 'object':
+        import pdb; pdb.set_trace()
+        print(param)
+    return _swagger_to_java_map[param['type']][param.get('format')]
+
 filters = (
     ('android_path_params', _android_path_params),
     ('android_query_params', _android_query_params),
@@ -164,5 +176,6 @@ filters = (
     ('android_header_params', _android_header_params),
     ('android_response_type', _android_response_type),
     ('android_param_type', _android_param_type),
-    ('android_example_value', _android_example_value)
+    ('android_example_value', _android_example_value),
+    ('android_property_type', _android_property_type)
 )

@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
+import com.squareup.moshi.Moshi;
 import {{ android.package_root_name }}.datamodel.*;
 import {{ android.package_root_name }}.operation.*;
 
@@ -22,6 +23,7 @@ import org.threeten.bp.OffsetDateTime;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
     Retrofit retrofit;
     {% for controller_name, controller in controllers.iteritems() %}
     {{ controller_name|pascal_case + 'Service' }} {{ controller_name|camel_case + 'Service' }};
-    {% endfor %}
+    {%- endfor %}
+    AuthenticationInterceptor authenticationInterceptor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +44,20 @@ public class MainActivity extends AppCompatActivity {
         AndroidThreeTen.init(this.getApplication());
         setContentView(R.layout.activity_main);
         
+        authenticationInterceptor = new AuthenticationInterceptor();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(authenticationInterceptor)
+                .build();
+
+        Moshi moshi = new Moshi.Builder()
+                .add(new MoshiDateTimeAdapter())
+                .build();
+        
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://10.0.2.2:10010/")
-                .addConverterFactory(MoshiConverterFactory.create())
+                .client(client)
+                .addConverterFactory(MoshiConverterFactory.create(moshi))
                 .build();        
         {% for controller_name, controller in controllers.iteritems() %}
         {{ controller_name|camel_case + 'Service' }} = retrofit.create({{ controller_name|pascal_case + 'Service' }}.class);
@@ -111,6 +125,9 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<{{ response_type }}> call, Response<{{ response_type }}> response) {
                 if(response.isSuccessful()) {
                     MainActivity.this.log("{{ operation_name|pascal_case }} Succeeded!");
+                    {%- if 'x-provides-api-key' in operation %}
+                    authenticationInterceptor.setApiToken("{{ operation['x-provides-api-key'] }}", response.body().getAccessToken());
+                    {%- endif -%}
                 }
                 else {
                     MainActivity.this.log("{{ operation_name|pascal_case }} Failed!");
