@@ -1,0 +1,153 @@
+{% import 'variables-android.jinja' as android with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (android.main_path + '/MainActivity')|start_of_file -}}
+package {{ android.package_root_name }};
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.jakewharton.threetenabp.AndroidThreeTen;
+
+import com.squareup.moshi.Moshi;
+import {{ android.package_root_name }}.datamodel.*;
+import {{ android.package_root_name }}.operation.*;
+
+import org.threeten.bp.OffsetDateTime;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.moshi.MoshiConverterFactory;
+
+public class MainActivity extends AppCompatActivity {
+
+    Retrofit retrofit;
+    {% for controller_name, controller in controllers.iteritems() %}
+    {{ controller_name|pascal_case + 'Service' }} {{ controller_name|camel_case + 'Service' }};
+    {%- endfor %}
+    AuthenticationInterceptor authenticationInterceptor;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        AndroidThreeTen.init(this.getApplication());
+        setContentView(R.layout.activity_main);
+        
+        authenticationInterceptor = new AuthenticationInterceptor();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(authenticationInterceptor)
+                .build();
+
+        Moshi moshi = new Moshi.Builder()
+                .add(new MoshiDateTimeAdapter())
+                .build();
+        
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:10010/")
+                .client(client)
+                .addConverterFactory(MoshiConverterFactory.create(moshi))
+                .build();        
+        {% for controller_name, controller in controllers.iteritems() %}
+        {{ controller_name|camel_case + 'Service' }} = retrofit.create({{ controller_name|pascal_case + 'Service' }}.class);
+        {%- endfor %}
+                
+        ListView listView = (ListView) findViewById(R.id.listView);
+        String[] items = { 
+            {%- for operation_name, operation in operations.iteritems() %}
+            "{{ operation_name|pascal_case }}",
+            {%- endfor %}
+        };
+        listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items));
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch(position) {
+                    {%- for operation_name, operation in operations.iteritems() %}
+                    case {{ loop.index - 1 }}:
+                        MainActivity.this.{{ operation_name|camel_case }}();
+                        break;
+                    {%- endfor %}
+                }
+            }
+        });
+        
+        ((TextView) findViewById(R.id.textView)).setMovementMethod(new ScrollingMovementMethod());
+        log("Welcome to Giant!");
+    }
+
+    protected void log(String value) {
+        TextView view = (TextView) findViewById(R.id.textView);
+        view.append(value + "\n");
+        try {
+            final int scrollAmount = view.getLayout().getLineTop(view.getLineCount()) - view.getHeight();
+            if (scrollAmount > 0) {
+                view.scrollTo(0, scrollAmount);
+            }
+            else {
+                view.scrollTo(0, 0);
+            }
+        }
+        catch(NullPointerException e) {
+            // swallow it.
+        }
+    }
+    
+    {%- for controller_name, controller in controllers.iteritems() -%}
+    {%- for operation in controller -%}
+    {%- set operation_name = operation.operationId %}
+    
+    protected void {{ operation_name|camel_case }}() {
+        {%- set op_name = operation_name|camel_case -%}
+        {%- set var_name = op_name + 'Call' -%}
+        {%- set response_type = operation|android_response_type -%}
+        {%- set service_name = controller_name|camel_case + 'Service' -%}
+        {%- set param_list = [] %}
+        {%- for param in operation.parameters %}
+        final {{ param|android_param_type }} {{ param.name|camel_case }} = {{ param|android_example_value }};
+        {%- do param_list.append(param.name|camel_case) -%}
+        {%- endfor %}
+        
+        Call<{{ response_type }}> {{ var_name }} = {{ service_name }}.{{ op_name }}({{ param_list|join(', ') }});
+        {{ var_name }}.enqueue(new Callback<{{ response_type }}>() {
+            @Override
+            public void onResponse(Call<{{ response_type }}> call, Response<{{ response_type }}> response) {
+                if(response.isSuccessful()) {
+                    MainActivity.this.log("{{ operation_name|pascal_case }} Succeeded!");
+                    {%- if 'x-provides-api-key' in operation %}
+                    authenticationInterceptor.setApiToken("{{ operation['x-provides-api-key'] }}", response.body().getAccessToken());
+                    {%- endif -%}
+                }
+                else {
+                    MainActivity.this.log("{{ operation_name|pascal_case }} Failed!");
+                    try {
+                        MainActivity.this.log("Code: " + String.valueOf(response.code()) + response.message());
+                        MainActivity.this.log("Headers: " + response.headers().toString());
+                        MainActivity.this.log(response.errorBody().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<{{ response_type }}> call, Throwable t) {
+                MainActivity.this.log("{{ operation_name|pascal_case }} Failed!");
+                MainActivity.this.log(t.getMessage());
+            }
+        });
+    }
+    {%- endfor -%}
+    {%- endfor %}
+}

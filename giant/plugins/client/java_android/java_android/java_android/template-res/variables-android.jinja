@@ -1,0 +1,25 @@
+{% import 'variables.jinja' as vars with context %}
+{% macro file_header(filename) %}
+/*
+ *
+ * {{ filename }}
+ *
+ * This file is GENERATED code. 
+ *
+ * Do not edit code contained in this file.
+ * Instead add code as a class extension externally, or edit the template files
+ * that produce this file.
+ *
+ * Do not check this code into source control.
+ * Instead, add / update you build script that will regenerate this library.
+ *
+ * Copyright 2015 (c) Lixar I.T. Inc.
+ */
+{% endmacro %}
+
+{% set company_name = 'todo' %}
+{% set package_root_path = 'com/' + company_name + '/' + vars.api_name %}
+{% set package_root_name = 'com.' + company_name + '.' + vars.api_name %}
+{% set test_path = 'app/src/test/java/' + package_root_path %}
+{% set android_test_path = 'app/src/androidTest/java/' + package_root_path %}
+{% set main_path = 'app/src/main/java/' + package_root_path %}

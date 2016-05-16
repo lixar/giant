@@ -200,16 +200,6 @@ def _template_string_in_af_format(string_value):
     import re
     return re.subn('\{([^}]+)\}', ':\\1', string_value)[0]
     
-def _parameters_in(operation, in_types):
-    results = []
-    if 'parameters' not in operation:
-        return []
-    for param in operation['parameters']:
-        param = _get_parameter(param)
-        if param['in'] == in_types or param['in'] in in_types:
-            results.append(param)
-    return results
-    
 def _example_parameter(param):
     param = _get_parameter(param)
     if param['in'] == 'body':
@@ -400,7 +390,6 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
     ('property_type', _property_type),
     ('template_string_in_af_format', _template_string_in_af_format),
-    ('parameters_in', _parameters_in),
     ('example_primitive', _example_primitive),
     ('example_primitive_string', _example_primitive_string),
     ('response_type', _response_type),

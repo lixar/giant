@@ -5,6 +5,7 @@ import os
 import StringIO
 from yapsy.IPlugin import IPlugin
 from datetime import datetime
+from collections import defaultdict
 
 _start_of_file_token = '<<<SOF:'
 
@@ -77,14 +78,23 @@ class BaseGiant(IPlugin):
         template = self.environment.get_template(template_name)
         file_type = template_name.split('.')[-2]
         operations = {}
+        controllers = defaultdict(lambda: [])
         for path_name, path in self.swagger['paths'].iteritems():
+            if 'x-swagger-router-controller' in path:
+                operation_controller = controllers[path['x-swagger-router-controller']]
             for method_name, method in filter(lambda item: item[0] in ['get', 'put', 'post', 'delete', 'options', 'head', 'patch'], path.items()):
                 operations[method['operationId']] = dict(method.items() + {
                     'method': method_name,
                     'path_name': path_name,
                     'path': path
                 }.items())
+                if 'x-swagger-router-controller' in method:
+                    operation_controller = controllers[method['x-swagger-router-controller']]
+                elif operation_controller == None:
+                    operation_controller = controllers['AppService']
                 operation = operations[method['operationId']]
+                operation_controller.append(operation)
+                operation['controller'] = operation_controller
                 
                 if 'parameters' in operation and 'parameters' in path:
                     operation['parameters'].extend(path['parameters'])
@@ -102,6 +112,10 @@ class BaseGiant(IPlugin):
                         operation['security'] = []
                     else:
                         operation['security'] = self.swagger.get('security')
+                        
+                for index, param in enumerate(operation['parameters']):
+                    if '$ref' in param:
+                        operation['parameters'][index] = self.swagger['parameters'][param['$ref'].split('/')[-1]]
                     
         for definition_name, definition in self.swagger['definitions'].iteritems():
             definition['name'] = definition_name
@@ -112,6 +126,7 @@ class BaseGiant(IPlugin):
         template_variables = {
             'swagger': self.swagger,
             'operations': operations,
+            'controllers': controllers,
             'current_datetime': datetime.utcnow()}
         template_variables.update(self.custom_variables())
         results = template.render(**template_variables).split(_start_of_file_token)
