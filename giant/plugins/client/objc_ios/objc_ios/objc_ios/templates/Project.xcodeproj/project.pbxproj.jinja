@@ -104,24 +104,39 @@
 			isa = PBXGroup;
 			children = (
 				CEA622081CE20BCB00CBA925 /* Models */,
+				CE77647D1CE37CA8005B1BE7 /* Operations */,
 				CE7B9FA61CE606500016C7EB /* Realm */,
-        CE77647D1CE37CA8005B1BE7 /* Operations */,
-				CE7764F71CE4F4E0005B1BE7 /* JSONable.h */,
-				CEAA10851CE5301300515F44 /* JSONable.m */,
+				CE6BCEE81CD019B100B6ED29 /* Supporting Files */,
+				CE49F3191CEA4F6300C06FFD /* TestApp */,
+				CE49F3181CEA4F5D00C06FFD /* Utility */,
+			);
+			path = "{{ vars.api_name }}";
+			sourceTree = "<group>";
+		};
+		CE49F3191CEA4F6300C06FFD /* TestApp */ = {
+			isa = PBXGroup;
+			children = (
+				CE6BCEFC1CD019B100B6ED29 /* Info.plist */,
+				CE6BCEF91CD019B100B6ED29 /* LaunchScreen.storyboard */,
+				CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */,
+				CE6BCEF11CD019B100B6ED29 /* Main.storyboard */,
 				CE6BCEEB1CD019B100B6ED29 /* AppDelegate.h */,
 				CE6BCEEC1CD019B100B6ED29 /* AppDelegate.m */,
 				CE6BCEEE1CD019B100B6ED29 /* ViewController.h */,
 				CE6BCEEF1CD019B100B6ED29 /* ViewController.m */,
-				CE6BCEF11CD019B100B6ED29 /* Main.storyboard */,
-				CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */,
-				CE6BCEF91CD019B100B6ED29 /* LaunchScreen.storyboard */,
-				CE6BCEFC1CD019B100B6ED29 /* Info.plist */,
-				CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */,
-				CE6BCEE81CD019B100B6ED29 /* Supporting Files */,
+			);
+			name = TestApp;
+			sourceTree = "<group>";
+		};
+		CE49F3181CEA4F5D00C06FFD /* Utility */ = {
+			isa = PBXGroup;
+			children = (
 				CEA622051CE111EA00CBA925 /* NSDate+ISO8601.h */,
 				CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */,
+				CE7764F71CE4F4E0005B1BE7 /* JSONable.h */,
+				CEAA10851CE5301300515F44 /* JSONable.m */,
 			);
-			path = "{{ vars.api_name }}";
+			name = Utility;
 			sourceTree = "<group>";
 		};
 		CE6BCEE81CD019B100B6ED29 /* Supporting Files */ = {
@@ -144,6 +159,7 @@
 		CEA622081CE20BCB00CBA925 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */,
         {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
         {% set file_name = (definition_name + '.h') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,

@@ -11,9 +11,11 @@
 - (NSDictionary*)toJSON
 {
   return @{
+      {% if 'properties' in definition %}
       {% for property_name, property in definition.properties.iteritems() %}
       @"{{ property_name }}": [self.{{ property_name|camel_case|objc_varname }} toJSON],
       {% endfor %}
+      {% endif %}
   };
 }
 

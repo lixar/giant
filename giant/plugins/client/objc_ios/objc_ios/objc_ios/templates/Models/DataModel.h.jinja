@@ -17,9 +17,11 @@
 {%- endif %}
 
 @interface {{ definition_name }}Model: {{ definition|model_base_type }} <JSONable>
+{% if 'properties' in definition %}
 {% for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
 {%- endfor %}
+{% endif %}
 
 - (NSDictionary*)toJSON;
 
