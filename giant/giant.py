@@ -165,7 +165,7 @@ class GiantCommands(object):
                     tag = f.split('.')[0]
                     self.mergedicts(swagger, api, conflicts=['paths', 'definitions'], conflict_tag=tag)
                 
-        plugin.setup(swagger, args.output_dir)
+        plugin.setup(swagger, args.output_dir, args.force_overwrite)
         print('Generating Project...')
         plugin.generate()
         
