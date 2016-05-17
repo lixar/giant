@@ -28,6 +28,8 @@ class GiantExecutor(object):
         self._common_parser.add_argument('-u', '--url', dest='swagger_url', required=False, type=str, help='The URL of the remote swagger file.')
         self._common_parser.add_argument('-f', '--swagger-files', dest='swagger_files', required=False, nargs='+', type=str, help='The path of the local swagger file.')
         self._common_parser.add_argument('-o', '--output_dir', dest='output_dir', required=False, default='./output', type=str, help='The output directory for generated files.')
+        self._common_parser.add_argument('--overwrite', dest='force_overwrite', required=False, default=None, action='store_true', help='Always overwrite files in the destination directory. Not specifying overwrite will default to command line prompt.')
+        self._common_parser.add_argument('--no-overwrite', dest='force_overwrite', required=False, default=None, action='store_false', help='Never overwrite files in the destination directory. Not specifying no-overwrite will default to command line prompt.')
         
         self._init_client_parser()
         self._init_server_parser()

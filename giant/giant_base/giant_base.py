@@ -1,23 +1,103 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import jinja2
 import os
+import filecmp
 import StringIO
+import tempfile
 from yapsy.IPlugin import IPlugin
 from datetime import datetime
 from collections import defaultdict
+import logging
+import json
 
 _start_of_file_token = '<<<SOF:'
 
+def _safe_create_dir(directory):
+    try:
+        os.mkdir(directory)
+    except:
+        pass
+    
+def _safe_create_dirs(directory_path):
+    try:
+        os.makedirs(directory_path)
+    except:
+        pass
+        
+        
 class GiantError(StandardError):
     
     def __init__(self, msg):
         super(GiantError, self).__init__(msg)
         
+class GenerationTracker(object):
+    
+    def __init__(self, project_name, force_overwrite):
+        self.project_name = project_name
+        self._log_directory = os.path.join(os.getcwd(), '.giant')
+        self._log_file_path = os.path.join(self._log_directory, project_name+'.gen')
+        self._setup_log_dicts()
+        self._force_overwrite = force_overwrite
+        
+    def check_skip_write_file(self, file_path, real_file_path, generated_template_data):
+        if (os.path.exists(file_path) and real_file_path in self._previous_generation_log
+        and int(os.stat(file_path).st_mtime) != self._previous_generation_log.get(real_file_path)):
+            if self._force_overwrite != None:
+                if not self._force_overwrite:
+                    self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
+                return not self._force_overwrite
+            return self._prompt_skip_file(real_file_path, generated_template_data)
+        return False
+            
+    def log_file_generated(self, file_path):
+        self._file_generation_log[file_path] = int(os.stat(file_path).st_mtime)
+        
+    def write_log(self):
+        with open(self._log_file_path, 'w') as f:
+            json.dump(self._file_generation_log, f, sort_keys=True, indent=4, separators=(',', ': '))
+        
+    def _setup_log_dicts(self):
+        try:
+            os.mkdir(self._log_directory)
+        except:
+            pass
+        self._file_generation_log = {}
+        try:
+            with open(self._log_file_path, 'r') as f:
+                self._previous_generation_log = json.load(f)
+        except:
+            self._previous_generation_log = {}
+
+    def _prompt_skip_file(self, real_file_path, generated_template_data):
+        logging.warning('It appears you have edited the following file.\n{}\n'.format(real_file_path))
+        overwrite = ''
+        while overwrite.lower() not in ('y', 'n'):
+            while overwrite.lower() not in ('y', 'n', 'd'):
+                overwrite = raw_input('Do you wish to overwrite it. (y)es, (N)o, (d)iff? ')
+                if overwrite == '':
+                    overwrite = 'N'
+            if overwrite.lower() == 'n':
+                self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
+                return True # Skip the file.
+            if overwrite.lower() == 'd':
+                self._diff_files(real_file_path, generated_template_data.splitlines(True))
+                overwrite = ''
+        return False # Don't skip the file.
+
+    def _diff_files(self, existing_file_path, string_list):    
+        import difflib
+        with open(existing_file_path, 'r') as existing_file:
+            existing_lines = [unicode(line, 'utf-8') for line in existing_file.readlines()]
+            diff = difflib.unified_diff(existing_lines, string_list)
+            value = u''.join(diff)
+            print(value)
+    
 
 class BaseGiant(IPlugin):
         
-    def setup(self, swagger, output_dir):
+    def setup(self, swagger, output_dir, force_overwrite=None):
         self.swagger = swagger
         self.output_dir = output_dir
         self.environment = jinja2.Environment(loader=self._get_loaders())
@@ -28,28 +108,28 @@ class BaseGiant(IPlugin):
         self.environment.filters.update(self._get_default_filters())
         self.environment.tests.update(self.tests() or {})
         self.environment.tests.update(self._get_default_tests())
+        self.generation_tracking = GenerationTracker(self.swagger['info']['title'], force_overwrite)
         
     def generate(self):
         print('Generating. ' + str(self._main_loader.list_templates()))
-        try:
-            os.mkdir(self.output_dir)
-        except:
-            pass
+        
+        _safe_create_dir(self.output_dir)
+            
         for template in self._main_loader.list_templates():
-            if os.path.split(template)[-1] == '.DS_Store':
-                continue
+            if os.path.split(template)[-1] == '.DS_Store': 
+                continue # Skip .DS_Store files.
             if template.endswith('.jinja'):
+                # Generate the template
                 self._populate_template(template)
             else:
+                # If it doesn't end with '.jinja' we do a straight copy of the file.
                 import shutil
                 output_path = os.path.join(self.output_dir, template)
-                try:
-                    os.makedirs(os.path.split(output_path)[0])
-                except:
-                    pass
-                shutil.copyfile(
-                    os.path.join(self._main_loader.searchpath[0], template),
-                    output_path)
+                _safe_create_dirs(os.path.split(output_path)[0])
+                shutil.copyfile(os.path.join(self._main_loader.searchpath[0], template), output_path)
+                    
+        # Write the generation report.
+        self.generation_tracking.write_log()
     
     def _get_loaders(self):
         common_loader = jinja2.PackageLoader('giant.giant_base', 'common')
@@ -146,16 +226,28 @@ class BaseGiant(IPlugin):
                 os.makedirs(output_dir)
             except StandardError:
                 pass
-            try:
-                if file_type != 'noext':
-                    filename = filename + '.' + file_type
-                with open(os.path.join(output_dir, filename), 'w') as out:
-                    out.write(data.encode('utf-8'))
-            except StandardError as e:
-                import pdb; pdb.set_trace()
+                
+            if file_type != 'noext':
+                filename = filename + '.' + file_type
+            file_path = os.path.join(output_dir, filename)
+            
+            real_file_path = os.path.realpath(file_path)
+            
+            # Check if we should skip this file.
+            if self.generation_tracking.check_skip_write_file(file_path, real_file_path, data):
+                continue # Skip it.
+            
+            # Write the file.
+            with open(file_path, 'w') as out:
+                out.write(data.encode('utf-8'))
+                
+            # Log that we've written a new file.
+            self.generation_tracking.log_file_generated(real_file_path)
+        
         
 class BaseGiantClient(BaseGiant):
     pass
+    
     
 class BaseGiantServer(BaseGiant):
     pass
