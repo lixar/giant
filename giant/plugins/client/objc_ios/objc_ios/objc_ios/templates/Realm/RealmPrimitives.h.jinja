@@ -13,9 +13,27 @@
 
 @end
 
-@interface RealmNumber : RLMObject
+@interface RealmInteger : RLMObject
 
-@property (nonatomic, strong) NSNumber* value;
+@property (nonatomic, strong) NSNumber<RLMInt>* value;
+
+@end
+
+@interface RealmDouble : RLMObject
+
+@property (nonatomic, strong) NSNumber<RLMDouble>* value;
+
+@end
+
+@interface RealmFloat : RLMObject
+
+@property (nonatomic, strong) NSNumber<RLMFloat>* value;
+
+@end
+
+@interface RealmBool : RLMObject
+
+@property (nonatomic, strong) NSNumber<RLMBool>* value;
 
 @end
 
@@ -32,11 +50,17 @@
 @end
 
 @interface RealmString (JSONable) <JSONable> @end
-@interface RealmNumber (JSONable) <JSONable> @end
+@interface RealmInteger (JSONable) <JSONable> @end
+@interface RealmFloat (JSONable) <JSONable> @end
+@interface RealmDouble (JSONable) <JSONable> @end
+@interface RealmBool (JSONable) <JSONable> @end
 @interface RealmDate (JSONable) <JSONable> @end
 @interface RLMArray (JSONable) <JSONable> @end
 
 RLM_ARRAY_TYPE(RealmString)
-RLM_ARRAY_TYPE(RealmNumber)
+RLM_ARRAY_TYPE(RealmInteger)
+RLM_ARRAY_TYPE(RealmFloat)
+RLM_ARRAY_TYPE(RealmDouble)
+RLM_ARRAY_TYPE(RealmBool)
 RLM_ARRAY_TYPE(RealmDate)
 RLM_ARRAY_TYPE(RealmData)

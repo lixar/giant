@@ -47,19 +47,19 @@ _swagger_to_realm_map = {
             'password': 'NSString *'
         }
     ),
-    'integer': defaultdict(lambda: 'NSNumber *',
+    'integer': defaultdict(lambda: 'NSNumber<RLMInt> *',
         {
-            'int32': 'NSNumber *',
-            'int64': 'NSNumber *'
+            'int32': 'NSNumber<RLMInt> *',
+            'int64': 'NSNumber<RLMInt> *'
         }
     ),
-    'number': defaultdict(lambda: 'NSNumber *',
+    'number': defaultdict(lambda: 'NSNumber<RLMDouble> *',
         {
-            'float': 'NSNumber *',
-            'double': 'NSNumber *'
+            'float': 'NSNumber<RLMFloat> *',
+            'double': 'NSNumber<RLMDouble> *'
         }
     ),
-    'boolean': defaultdict(lambda: 'NSNumber *'),
+    'boolean': defaultdict(lambda: 'NSNumber<RLMBool> *'),
     'array': defaultdict(lambda: 'RLMArray<{object_type}*><{object_type}> *'),
 }
 

@@ -8,7 +8,13 @@
 
 @implementation RealmString @end
 
-@implementation RealmNumber @end
+@implementation RealmInteger @end
+
+@implementation RealmFloat @end
+
+@implementation RealmDouble @end
+
+@implementation RealmBool @end
 
 @implementation RealmDate @end
 
@@ -32,7 +38,34 @@
 
 @end
 
-@implementation RealmNumber (JSONable)
+@implementation RealmInteger (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value;
+}
+
+@end
+
+@implementation RealmFloat (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value;
+}
+
+@end
+
+@implementation RealmDouble (JSONable)
+
+- (id<JSONable>)toJSON
+{
+    return self.value;
+}
+
+@end
+
+@implementation RealmBool (JSONable)
 
 - (id<JSONable>)toJSON
 {
