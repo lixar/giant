@@ -4,7 +4,7 @@
  *
  * {{ filename }}
  *
- * This file is GENERATED code. 
+ * This file is GENERATED code.
  *
  * Do not edit code contained in this file.
  * Instead add code as a class extension externally, or edit the template files
@@ -17,9 +17,10 @@
  */
 {% endmacro %}
 
-{% set company_name = 'todo' %}
+{% set company_name = 'lixar' %}
 {% set package_root_path = 'com/' + company_name + '/' + vars.api_name %}
 {% set package_root_name = 'com.' + company_name + '.' + vars.api_name %}
-{% set test_path = 'app/src/test/java/' + package_root_path %}
-{% set android_test_path = 'app/src/androidTest/java/' + package_root_path %}
-{% set main_path = 'app/src/main/java/' + package_root_path %}
+{% set test_path = 'sdk/src/test/java/' + package_root_path %}
+{% set android_test_path = 'sdk/src/androidTest/java/' + package_root_path %}
+{% set main_path = 'sdk/src/main/java/' + package_root_path %}
+{% set source_path_example = 'example/src/main/java/' + package_root_path + '/example'%}

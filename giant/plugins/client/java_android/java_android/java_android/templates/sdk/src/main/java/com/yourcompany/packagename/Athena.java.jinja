@@ -1,0 +1,196 @@
+{% import 'variables-android.jinja' as android with context %}
+{% import 'variables.jinja' as vars with context %}
+{{ (android.main_path + '/Athena')|start_of_file -}}
+package com.lixar.athena;
+
+import android.util.Log;
+
+import com.lixar.athena.model.AuthenticationResponse;
+import com.lixar.athena.model.Channel;
+import com.lixar.athena.model.ChannelsListResponse;
+import com.lixar.athena.model.UserInfoResponse;
+import com.lixar.athena.operation.AccountsService;
+import com.lixar.athena.operation.AuthenticationInterceptor;
+import com.lixar.athena.operation.ChannelsService;
+import com.lixar.athena.operation.SurveysService;
+import com.lixar.athena.utility.MoshiDateTimeAdapter;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.squareup.moshi.Moshi;
+
+import org.threeten.bp.OffsetDateTime;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.moshi.MoshiConverterFactory;
+
+/**
+ * Created by pzhou on 2016-05-16.
+ */
+public class Athena {
+    private final static String TAG = "Athena";
+
+    public ChannelsService getChannelsService() {
+        return channelsService;
+    }
+
+    public SurveysService getSurveysService() {
+        return surveysService;
+    }
+
+    public AccountsService getAccountsService() {
+        return accountsService;
+    }
+
+    public static class Builder {
+        private String urlString;
+        private String apiKey;
+        private String clientIdentifier;
+        public Builder(){
+            apiKey = "";
+            clientIdentifier = "";
+
+        };
+
+        public Builder withUrl(String urlString){
+            this.urlString = urlString;
+            this.apiKey = "";
+            this.clientIdentifier = "";
+            return this;
+        };
+
+        public Builder withApiKey(String apiKey){
+            this.apiKey = "";
+            this.clientIdentifier = "";
+            return this;
+        };
+
+        public Builder withClientIdentifier(String clientIdentifier){
+            return this;
+        };
+
+        public ListenableFuture<Athena> buildAsync(){
+            Athena instance = new Athena(this.urlString, this.apiKey, this.clientIdentifier);
+            return instance.loginAsync();
+        }
+    }
+
+    private String urlString;
+    private String apiKey;
+    private String clientIdentifier;
+
+    private ChannelsService channelsService;
+    private SurveysService surveysService;
+    private AccountsService accountsService;
+    AuthenticationInterceptor authenticationInterceptor;
+
+    private Athena(String urlString, String apiKey, String clientIdentifier) {
+        this.apiKey = apiKey;
+        this.clientIdentifier = clientIdentifier;
+        authenticationInterceptor = new AuthenticationInterceptor();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(authenticationInterceptor)
+                .build();
+
+        Moshi moshi = new Moshi.Builder()
+                .add(new MoshiDateTimeAdapter())
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(urlString)
+                .client(client)
+                .addConverterFactory(MoshiConverterFactory.create(moshi))
+                .build();
+
+        channelsService = retrofit.create(ChannelsService.class);
+        surveysService = retrofit.create(SurveysService.class);
+        accountsService = retrofit.create(AccountsService.class);
+    }
+
+    private ListenableFuture<Athena> loginAsync(){
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+        ListenableFuture<Athena> loginFuture = service.submit(new Callable<Athena>() {
+            public Athena call() throws Exception {
+                Call<AuthenticationResponse> loginCall = accountsService.apikey(Athena.this.apiKey, Athena.this.clientIdentifier);
+                try {
+                    Response<AuthenticationResponse> response = loginCall.execute();
+                    if (response.isSuccessful()){
+                        Log.d(TAG, String.format("Login Succeeded with token: %s", response.body().getAccessToken()));
+                        authenticationInterceptor.setApiToken("bearer", response.body().getAccessToken());
+                        return Athena.this;
+                    }else{
+                        Log.d(TAG, "Login Failed!");
+                        Log.d(TAG, "Code: " + String.valueOf(response.code()) + response.message());
+                        Log.d(TAG, "Headers: " + response.headers().toString());
+                        Log.d(TAG, response.errorBody().string());
+                        throw new IOException(String.format("Login Failed with code: %d", response.code()));
+                    }
+
+                } catch (IOException e) {
+                    throw e;
+                }
+            }
+        });
+        return loginFuture;
+    };
+
+    public ListenableFuture<UserInfoResponse> getUserInfoAsync(){
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+        ListenableFuture<UserInfoResponse> callFuture = service.submit(new Callable<UserInfoResponse>() {
+            public UserInfoResponse call() throws Exception {
+                Call<UserInfoResponse> restCall = accountsService.getUserInfo();
+                try {
+                    Response<UserInfoResponse> response = restCall.execute();
+                    if (response.isSuccessful()){
+                        Log.d(TAG, String.format("getUserInfoAsync Succeeded with userInfo: %s",response.body().toString()));
+                        return response.body();
+                    }else{
+                        Log.d(TAG, "getUserInfoAsync Failed!");
+                        Log.d(TAG, "Code: " + String.valueOf(response.code()) + response.message());
+                        Log.d(TAG, "Headers: " + response.headers().toString());
+                        throw new IOException(String.format("getUserInfoAsync Failed with code: %d", response.code()));
+                    }
+                } catch (IOException e) {
+                    throw e;
+                }
+            }
+        });
+        return callFuture;
+    }
+
+    public ListenableFuture<List<Channel>> getChannelsAsync(){
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+        ListenableFuture<List<Channel>> callFuture = service.submit(new Callable<List<Channel>>() {
+            public List<Channel> call() throws Exception {
+                final ArrayList<Integer> exclude = new ArrayList<Integer>();
+                final OffsetDateTime whenModified = OffsetDateTime.now();
+                Call<ChannelsListResponse> restCall = surveysService.getChannels(exclude, whenModified );
+                try {
+                    Response<ChannelsListResponse> response = restCall.execute();
+                    if (response.isSuccessful()){
+                        Log.d(TAG, String.format("getUserInfoAsync Succeeded with userInfo: %s",response.body().toString()));
+                        return null;
+                    }else{
+                        Log.d(TAG, "getChannelsAsync Failed!");
+                        Log.d(TAG, "Code: " + String.valueOf(response.code()) + response.message());
+                        Log.d(TAG, "Headers: " + response.headers().toString());
+                        throw new IOException(String.format("getChannelsAsync Failed with code: %d", response.code()));
+                    }
+                } catch (IOException e) {
+                    throw e;
+                }
+            }
+        });
+        return callFuture;
+    }
+}
