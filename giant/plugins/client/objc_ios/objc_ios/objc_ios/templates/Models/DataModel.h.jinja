@@ -16,7 +16,7 @@
 {%- endfor -%}
 {%- endif %}
 
-@interface {{ definition_name }}Model: {{ definition|model_base_type }} <JSONable>
+@interface {{ definition_name }}: {{ definition|model_base_type }} <JSONable>
 {% if 'properties' in definition %}
 {% for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
@@ -27,6 +27,6 @@
 
 @end
 {%- if 'x-persist' in definition and definition['x-persist'] %}
-RLM_ARRAY_TYPE({{ definition_name }}Model)
+RLM_ARRAY_TYPE({{ definition_name }})
 {%- endif -%}
 {%- endfor %}

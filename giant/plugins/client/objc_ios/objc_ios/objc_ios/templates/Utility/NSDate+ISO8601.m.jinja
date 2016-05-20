@@ -13,16 +13,28 @@
 
 @implementation NSDate (ISO8601)
 
++ (NSDateFormatter*)iso8601Formatter
+{
+    static NSDateFormatter *dateFormatter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+        NSLocale *enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        [dateFormatter setLocale:enUSPOSIXLocale];
+        [dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+        [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+    });
+    return dateFormatter;
+}
+
 - (NSString*)iso8601
 {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    NSLocale *enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-    [dateFormatter setLocale:enUSPOSIXLocale];
-    [dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
-    
-    NSString *iso8601String = [dateFormatter stringFromDate:self];
-    return iso8601String;
+    return [self.class.iso8601Formatter stringFromDate:self];
+}
+
++ (NSDate*)dateWithISO8601String:(NSString*)iso8601
+{
+    return [self.class.iso8601Formatter dateFromString:iso8601];
 }
 
 @end

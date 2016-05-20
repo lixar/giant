@@ -27,6 +27,27 @@
     return self.value.iso8601;
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmDate* object = [RealmDate new];
+    object.value = [NSDate dateWithISO8601String:(NSString*)json];
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
+}
+
 @end
 
 @implementation RealmString (JSONable)
@@ -34,6 +55,27 @@
 - (id<JSONable>)toJSON
 {
     return self.value;
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmString* object = [RealmString new];
+    object.value = (NSString*)json;
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
 }
 
 @end
@@ -45,6 +87,27 @@
     return self.value;
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmInteger* object = [RealmInteger new];
+    object.value = (NSNumber*)json;
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
+}
+
 @end
 
 @implementation RealmFloat (JSONable)
@@ -52,6 +115,27 @@
 - (id<JSONable>)toJSON
 {
     return self.value;
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmFloat* object = [RealmFloat new];
+    object.value = (NSNumber*)json;
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
 }
 
 @end
@@ -63,6 +147,27 @@
     return self.value;
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmDouble* object = [self new];
+    object.value = (NSNumber*)json;
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
+}
+
 @end
 
 @implementation RealmBool (JSONable)
@@ -70,6 +175,27 @@
 - (id<JSONable>)toJSON
 {
     return self.value;
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    RealmBool* object = [self new];
+    object.value = (NSNumber*)json;
+    return object;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if(object == self) {
+        return YES;
+    }
+    if([super isEqualToObject:object]) {
+        return YES;
+    }
+    if(![object isMemberOfClass:self.class]) {
+        return NO;
+    }
+    return [self.value isEqual:[object value]];
 }
 
 @end
@@ -85,6 +211,14 @@
     }
     
     return [jsoned copy];
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    [[NSException exceptionWithName:@"Cannot parse NSArray to RLMArray."
+                            reason:@"Cannot create RLMArray directly."
+                           userInfo:nil] raise];
+    return nil;
 }
 
 @end

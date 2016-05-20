@@ -167,17 +167,17 @@ def _property_type(prop):
     if 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
         prop = _get_property(prop)
         if prop['type'] == 'object':
-            return prop['name'] + 'Model *'
+            return prop['name'] + ' *'
         value = _swagger_to_realm_map[prop['type']][prop.get('format')]
         if prop['type'] == 'array':
             if '$ref' in prop['items']:
-                return value.format(object_type=prop['items']['$ref'].split('/')[-1]+'Model')
+                return value.format(object_type=prop['items']['$ref'].split('/')[-1])
             items_prop = _get_property(prop['items'])
             if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
                 items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]
                 return value.format(object_type=items_type)
             else:
-                return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')]+'Model')
+                return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
         return value
     prop = _get_property(prop)
     return _swagger_to_objc_map[prop['type']][prop.get('format')]
@@ -209,7 +209,7 @@ def _example_parameter(param):
 def _definition_type(schema):
     schema = _get_schema(schema)
     if 'type' not in schema or schema['type'] == 'object':
-        return '{}Model *'.format(schema['name'])
+        return '{} *'.format(schema['name'])
     elif schema['type'] == 'array':
         return 'NSArray<{}> *'.format(_definition_type(schema['items']))
     else:
@@ -227,7 +227,7 @@ def _example_definition(schema):
                 model_template = model_template + 'model[@"{prop_name}"] = {prop_example}; '.format(prop_name=prop_name, prop_example=_example_definition(prop))
         else:
             try:
-                model_template = '^{{ {schema_name}Model* model = [{schema_name}Model new]; '.format(schema_name=schema['name'])
+                model_template = '^{{ {schema_name}* model = [{schema_name} new]; '.format(schema_name=schema['name'])
             except StandardError as e:
                 import pdb; pdb.set_trace()
                 print(e)
@@ -237,7 +237,7 @@ def _example_definition(schema):
                 model_template = model_template + 'model.{prop_name} = {prop_example}; '.format(prop_name=_objc_varname(base_filters.camel_case(prop_name)), prop_example=_example_definition(prop))
         model_template = model_template + 'return model; }()'
         return model_template
-        # return '[{}Model new]'.format(schema['name'])
+        # return '[{} new]'.format(schema['name'])
     elif schema['type'] == 'array':
         return '@[{}]'.format(_example_definition(schema['items']))
     else:
@@ -385,6 +385,26 @@ def _realm_property_import(prop):
     elif prop['type'] == 'object':
         return '#import "{}.h"'.format(prop['name'])
     return None
+    
+def _response_type_forward_decl(operation):
+    for response_code, response in operation['responses'].iteritems():
+        if response_code >= 200 and response_code < 300 and 'schema' in response:
+            schema = _get_schema(response['schema'])
+            if 'type' not in schema or schema['type'] == 'object':
+                return '@class ' + schema['name'] + ';'
+            elif schema['type'] == 'array' and '$ref' in schema['items']:
+                return '@class ' + schema['items']['$ref'].split('/')[-1] + ';'
+    return ''
+    
+def _response_type_import(operation):
+    for response_code, response in operation['responses'].iteritems():
+        if response_code >= 200 and response_code < 300 and 'schema' in response:
+            schema = _get_schema(response['schema'])
+            if 'type' not in schema or schema['type'] == 'object':
+                return '#import "' + schema['name'] + '.h"'
+            elif schema['type'] == 'array' and '$ref' in schema['items']:
+                return '#import "' + schema['items']['$ref'].split('/')[-1] + '.h"'
+    return ''
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
@@ -403,7 +423,10 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('parameter_type', _parameter_type),
     ('example_parameter', _example_parameter),
     ('model_base_type', _model_base_type),
-    ('realm_property_import', _realm_property_import))
+    ('realm_property_import', _realm_property_import),
+    ('response_type_forward_decl', _response_type_forward_decl),
+    ('response_type_import', _response_type_import)
+)
     
     
     

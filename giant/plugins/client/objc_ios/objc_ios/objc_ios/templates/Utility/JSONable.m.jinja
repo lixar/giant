@@ -18,6 +18,11 @@
     return [jsoned copy];
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    return [NSDictionary dictionaryWithDictionary:(NSDictionary*)json];
+}
+
 @end
 
 @implementation NSArray (JSONable)
@@ -31,6 +36,11 @@
     return [jsoned copy];
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    return [NSArray arrayWithArray:(NSArray*)json];
+}
+
 @end
 
 @implementation NSDate (JSONable)
@@ -38,6 +48,11 @@
 - (id<JSONable>)toJSON
 {
     return self.iso8601;
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    return [NSDate dateWithISO8601String:(NSString *)json];
 }
 
 @end
@@ -49,6 +64,11 @@
     return self;
 }
 
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    return [(NSString *)json copy];
+}
+
 @end
 
 @implementation NSNumber (JSONable)
@@ -58,5 +78,9 @@
     return self;
 }
 
-@end
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    return [(NSNumber *)json copy];
+}
 
+@end

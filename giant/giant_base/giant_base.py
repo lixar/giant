@@ -48,7 +48,9 @@ class GenerationTracker(object):
                 if not self._force_overwrite:
                     self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
                 return not self._force_overwrite
-            return self._prompt_skip_file(real_file_path, generated_template_data)
+            diff = self._create_diff(real_file_path, generated_template_data)
+            if diff != '':
+                return self._prompt_skip_file(real_file_path, generated_template_data, diff)
         return False
             
     def log_file_generated(self, file_path):
@@ -70,7 +72,7 @@ class GenerationTracker(object):
         except:
             self._previous_generation_log = {}
 
-    def _prompt_skip_file(self, real_file_path, generated_template_data):
+    def _prompt_skip_file(self, real_file_path, generated_template_data, diff):
         logging.warning('It appears you have edited the following file.\n{}\n'.format(real_file_path))
         overwrite = ''
         while overwrite.lower() not in ('y', 'n'):
@@ -82,17 +84,18 @@ class GenerationTracker(object):
                 self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
                 return True # Skip the file.
             if overwrite.lower() == 'd':
-                self._diff_files(real_file_path, generated_template_data.splitlines(True))
+                print(diff)
                 overwrite = ''
         return False # Don't skip the file.
 
-    def _diff_files(self, existing_file_path, string_list):    
+    def _create_diff(self, real_file_path, generated_template_data):
         import difflib
-        with open(existing_file_path, 'r') as existing_file:
+        string_list = generated_template_data.splitlines(True)
+        with open(real_file_path, 'r') as existing_file:
             existing_lines = [unicode(line, 'utf-8') for line in existing_file.readlines()]
-            diff = difflib.unified_diff(existing_lines, string_list)
-            value = u''.join(diff)
-            print(value)
+        diff = difflib.unified_diff(existing_lines, string_list)
+        value = u''.join(diff)
+        return value
     
 
 class BaseGiant(IPlugin):

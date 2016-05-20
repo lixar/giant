@@ -2,6 +2,7 @@
 {% import 'variables.jinja' as vars with context %}
 {{- (vars.api_name + '/Operations/Operation')|start_of_file -}}
 {{- ios.file_header('Operation.h') }}
+
 #import <Foundation/Foundation.h>
 #import "OperationBuilder.h"
 
@@ -39,6 +40,12 @@
 {{- ios.file_header(operation_name+'Operation.h') }}
 #import "Operation.h"
 #import "{{ operation_name }}OperationBuilder.h"
+{%- set forward_decl = operation|response_type_forward_decl %}
+
+{%- if forward_decl != '' %}
+
+{{ forward_decl }}
+{%- endif %}
 
 @interface {{operation_name}}Operation: Operation <OperationProtocol>
 
@@ -46,5 +53,9 @@
 
 - (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder;
 
+{% if (operation|response_type) != '' -%}
+@property (nonatomic, strong) {{ operation|response_type }} responseObject;
+
+{% endif -%}
 @end
 {% endfor %}

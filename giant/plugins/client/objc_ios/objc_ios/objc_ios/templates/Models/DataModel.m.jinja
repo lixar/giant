@@ -7,17 +7,28 @@
 
 #import "{{ definition_name }}.h"
 
-@implementation {{ definition_name }}Model
+@implementation {{ definition_name }}
 
 - (NSDictionary*)toJSON
 {
-  return @{
+    return @{
       {%- if 'properties' in definition -%}
       {%- for property_name, property in definition.properties.iteritems() %}
       @"{{ property_name }}": [self.{{ property_name|camel_case|objc_varname }} toJSON],
       {%- endfor -%}
       {%- endif %}
-  };
+    };
+}
+
++ (instancetype)fromJSON:(id<JSONable>)json
+{
+    {{ definition_name }} *model = [self new];
+    {%- if 'properties' in definition -%}
+    {%- for property_name, property in definition.properties.iteritems() %}
+    model.{{ property_name|camel_case|objc_varname }} = json[@"{{ property_name }}"];
+    {%- endfor -%}
+    {%- endif %}
+    return model;
 }
 
 @end

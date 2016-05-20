@@ -7,6 +7,7 @@
 @protocol JSONable <NSObject>
 
 - (id<JSONable>)toJSON;
++ (instancetype)fromJSON:(id<JSONable>)json;
 
 @end
 

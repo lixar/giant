@@ -2,6 +2,7 @@
 {% import 'variables.jinja' as vars with context %}
 {{ (vars.api_name + '/Operations/OperationBuilder')|start_of_file -}}
 {{- ios.file_header('OperationBuilder.h') }}
+
 #import <Foundation/Foundation.h>
 
 @class Operation;

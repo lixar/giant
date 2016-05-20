@@ -2,6 +2,7 @@
 {% import 'variables.jinja' as vars with context %}
 {{ (vars.api_name + '/Operations/Operation')|start_of_file -}}
 {{- ios.file_header('OperationBuilder.h') }}
+
 #import "Operation.h"
 #import <AFNetworking/AFNetworking.h>
 #import "JSONable.h"
@@ -86,13 +87,12 @@
     self.task = [sessionManager
      dataTaskWithRequest:request
      completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-         //! \todo:: This
          NSLog(@"Response: %@", response);
          NSLog(@"ResponseObject: %@", responseObject);
          NSLog(@"Error: %@", error);
          weakSelf.error = error;
          weakSelf.response = response;
-         weakSelf.responseObject = responseObject;
+         weakSelf.responseObject = responseObject; // This will parse if needed.
          [weakSelf completeOperation];
      }];
 }
@@ -262,9 +262,14 @@
 {%- set operation_name = operation_name|pascal_case -%}
 {{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
 {{- ios.file_header(operation_name+'Operation.m') }}
+
 #import "{{ operation_name }}Operation.h"
 #import "{{ operation_name }}OperationBuilder.h"
 #import <AFNetworking/AFNetworking.h>
+{%- set response_import = operation|response_type_import -%}
+{%- if response_import != '' %}
+{{ response_import }}
+{%- endif %}
 
 @interface {{ operation_name }}Operation ()
 
@@ -273,6 +278,21 @@
 @end
 
 @implementation {{ operation_name }}Operation 
+
+{%- if (operation|response_type) != '' %}
+
+@dynamic responseObject;
+
+- (void)setResponseObject:(id)responseObject
+{
+    if([responseObject isMemberOfClass:[{{ (operation|response_type)[:-2] }} class]]) {
+        [super setResponseObject:responseObject];
+    }
+    else {
+        [super setResponseObject:[{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
+    }
+}
+{%- endif %}
 
 + (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock
 {
@@ -325,7 +345,7 @@
     {%- elif form_params|length > 0 %}
     return @{
     {%- for param in form_params %}
-        @"{{ param.name }}": self.builder.{{ param.name|camel_case }},{% endfor %}
+        @"{{ param.name }}": self.builder.{{ param.name|camel_case }} ? self.builder.{{ param.name|camel_case }} : [NSNull null],{% endfor %}
     };
     {%- else %}
     return nil;

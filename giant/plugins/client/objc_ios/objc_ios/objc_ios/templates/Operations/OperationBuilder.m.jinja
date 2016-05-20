@@ -4,6 +4,7 @@
 {%- set operation_name = operation_name|pascal_case -%}
 {{ (vars.api_name + '/Operations/' + operation_name + 'OperationBuilder')|start_of_file -}}
 {{- ios.file_header(operation_name+'OperationBuilder.m') }}
+
 #import "{{ operation_name }}OperationBuilder.h"
 #import "{{ operation_name }}Operation.h"
 
