@@ -9,26 +9,72 @@ import com.squareup.moshi.Json;
 
 import org.threeten.bp.OffsetDateTime;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class {{ class_name }} {
+{% if definition|android_should_persist %}
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.field.ForeignCollectionField;
+{%- endif %}
+
+
+public class {{ class_name }} extends Entity{
     {% if 'properties' in definition %}
-    {% for property_name, property in definition.properties.iteritems() -%}
+    {% for property_name, property in definition.properties.iteritems()%}
+    {% if  property|android_enum_exist %}
+    public enum {{ property_name }}{
+      {% set value_name_map = property|android_enum_value_name_map%}
+      {% set index = 0 %}
+      {%for key in value_name_map.keys()%}
+      {%if index < (value_name_map.keys()|length - 1)%}
+      
+        {{ value_name_map[key] }}({{ key }}),{%else%}
+
+        {{ value_name_map[key] }}({{ key }});{%endif%}
+
+      {% set index = index + 1 %}
+      {%endfor%}
+
+        private final int value;
+
+        {{ property_name }}(final int newValue) {
+            value = newValue;
+        }
+
+        public int getValue() { return value; }
+    }
+    {%endif%}
+    {%endfor%}
+    {% for property_name, property in definition.properties.iteritems()%}
+    {% if definition|android_should_persist %}
+    {% if property['type'] == 'array' %}
+    //@ForeignCollectionField(eager = false)
+    {%elif not property|android_ref_exist%}
+    @DatabaseField(canBeNull = false {% if (property|android_property_type) == "OffsetDateTime"%}, dataType = DataType.SERIALIZABLE{% endif %})
+    {% endif %}
+    {%- endif %}
     @Json(name = "{{ property_name }}")
+    {% if definition|android_should_persist  and property['type'] == 'array' %}
+    private ForeignCollection<{{ property['items']|android_property_type }}> {{ property_name|camel_case }};
+    {%else%}
     private {{ property|android_property_type }} {{ property_name|camel_case }};
+    {%endif%}
     {% endfor %}
-    {% for property_name, property in definition.properties.iteritems() -%}
-    public {{ property|android_property_type }} get{{ property_name|pascal_case }}() {
+
+    {% for property_name, property in definition.properties.iteritems() %}
+    public {% if definition|android_should_persist  and property['type'] == 'array' %}ForeignCollection<{{ property['items']|android_property_type }}>{%else%}{{ property|android_property_type }}{%endif%} get{{ property_name|pascal_case }}() {
         return {{ property_name|camel_case }};
     }
-
     {% endfor -%}
-    {% for property_name, property in definition.properties.iteritems() -%}
-    public void set{{ property_name|pascal_case }}({{ property|android_property_type }} {{ property_name|camel_case }}) {
+    {% for property_name, property in definition.properties.iteritems() %}
+
+    public void set{{ property_name|pascal_case }}({% if definition|android_should_persist  and property['type'] == 'array' %}ForeignCollection<{{ property['items']|android_property_type }}> {%else%}{{ property|android_property_type }}{%endif%} {{ property_name|camel_case }}) {
         this.{{ property_name|camel_case }} = {{ property_name|camel_case }};
     }
 
-    {% endfor -%}
-    {%- endif %}
+    {% endfor %}
+    {% endif %}
 }
 {% endfor %}

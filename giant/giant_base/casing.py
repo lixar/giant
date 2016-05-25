@@ -18,7 +18,20 @@ def pascal_case(value):
     splitted = filter(lambda v: v != '', splitted)
     splitted = ''.join(v.capitalize() for v in splitted)
     return splitted
-    
+
 def camel_case(value):
     pascal_cased = pascal_case(value)
     return pascal_cased[0].lower() + pascal_cased[1:]
+
+def all_upper_case(value):
+    parts1 = _non_letters_re.split(value)
+    parts1 = filter(lambda v: _one_or_more_letters.match(v), parts1)
+    splitted1 = []
+    for part in parts1:
+        more_parts1 = _non_lowercase_re.split(part)
+        splitted1.append(more_parts1[0].lower())
+        for i in range(1, len(more_parts1)-1, 2):
+            splitted1.append(more_parts1[i].lower() + more_parts1[i+1])
+    splitted1 = filter(lambda v: v != '', splitted1)
+    splitted1 = '_'.join(v.upper() for v in splitted1)
+    return splitted1
