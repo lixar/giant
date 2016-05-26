@@ -29,14 +29,13 @@ public class {{ class_name }} extends Entity{
       {% set index = 0 %}
       {%for key in value_name_map.keys()%}
       {%if index < (value_name_map.keys()|length - 1)%}
-      
-        {{ value_name_map[key] }}({{ key }}),{%else%}
+        {{ value_name_map[key] }}({{ key }}),
+        {%else%}
+        {{ value_name_map[key] }}({{ key }});
 
-        {{ value_name_map[key] }}({{ key }});{%endif%}
-
+        {%endif%}
       {% set index = index + 1 %}
       {%endfor%}
-
         private final int value;
 
         {{ property_name }}(final int newValue) {
@@ -47,30 +46,36 @@ public class {{ class_name }} extends Entity{
     }
     {%endif%}
     {%endfor%}
+
     {% for property_name, property in definition.properties.iteritems()%}
     {% if definition|android_should_persist %}
-    {% if property['type'] == 'array' %}
-    //@ForeignCollectionField(eager = false)
-    {%elif not property|android_ref_exist%}
-    @DatabaseField(canBeNull = false {% if (property|android_property_type) == "OffsetDateTime"%}, dataType = DataType.SERIALIZABLE{% endif %})
+    {% if property['type'] == 'array' and property['items']|android_ref_exist%}
+    @ForeignCollectionField(eager = false)
+    {%else%}
+    @DatabaseField(canBeNull = false {% if (property|android_property_type) == "OffsetDateTime" or property|android_ref_exist%}, dataType = DataType.SERIALIZABLE{% endif %})
     {% endif %}
     {%- endif %}
     @Json(name = "{{ property_name }}")
-    {% if definition|android_should_persist  and property['type'] == 'array' %}
+    {% if definition|android_should_persist  and property['type'] == 'array' and property['items']|android_ref_exist%}
     private ForeignCollection<{{ property['items']|android_property_type }}> {{ property_name|camel_case }};
     {%else%}
     private {{ property|android_property_type }} {{ property_name|camel_case }};
     {%endif%}
-    {% endfor %}
 
+    {% endfor %}
+    {%if definition|android_parent_exist and definition|android_should_persist %}
+    @DatabaseField(canBeNull = false ,foreign = true)
+    private {{ definition['parent']['name']|pascal_case }} {{ definition['parent']['name']|camel_case }};
+
+    {%endif%}
     {% for property_name, property in definition.properties.iteritems() %}
-    public {% if definition|android_should_persist  and property['type'] == 'array' %}ForeignCollection<{{ property['items']|android_property_type }}>{%else%}{{ property|android_property_type }}{%endif%} get{{ property_name|pascal_case }}() {
+    public {% if definition|android_should_persist  and property['type'] == 'array' and property['items']|android_ref_exist%}ForeignCollection<{{ property['items']|android_property_type }}>{%else%}{{ property|android_property_type }}{%endif%} get{{ property_name|pascal_case }}() {
         return {{ property_name|camel_case }};
     }
+
     {% endfor -%}
     {% for property_name, property in definition.properties.iteritems() %}
-
-    public void set{{ property_name|pascal_case }}({% if definition|android_should_persist  and property['type'] == 'array' %}ForeignCollection<{{ property['items']|android_property_type }}> {%else%}{{ property|android_property_type }}{%endif%} {{ property_name|camel_case }}) {
+    public void set{{ property_name|pascal_case }}({% if definition|android_should_persist  and property['type'] == 'array'  and property['items']|android_ref_exist%}ForeignCollection<{{ property['items']|android_property_type }}> {%else%}{{ property|android_property_type }}{%endif%} {{ property_name|camel_case }}) {
         this.{{ property_name|camel_case }} = {{ property_name|camel_case }};
     }
 

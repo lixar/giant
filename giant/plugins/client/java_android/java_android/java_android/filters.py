@@ -194,6 +194,10 @@ def _android_should_persist(param):
     if 'x-persist' in param:
         return param['x-persist']
     return False
+def _android_parent_exist(param):
+    if 'parent' in param and param['parent'] != None:
+        return True
+    return False
 filters = (
     ('android_path_params', _android_path_params),
     ('android_query_params', _android_query_params),
@@ -208,5 +212,6 @@ filters = (
     ('android_enum_value_name_map', _android_enum_value_name_map),
     ('android_enum_exist', _android_enum_exist),
     ('android_should_persist', _android_should_persist),
-    ('android_ref_exist', _android_ref_exist)
+    ('android_ref_exist', _android_ref_exist),
+    ('android_parent_exist', _android_parent_exist)
 )

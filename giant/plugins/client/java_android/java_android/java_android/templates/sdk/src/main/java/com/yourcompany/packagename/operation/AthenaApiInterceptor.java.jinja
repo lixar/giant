@@ -9,7 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.lixar.athena.cache.CacheFactory;
-import com.lixar.athena.cache.RestCache;
+import com.lixar.athena.cache.HttpCache;
 import com.lixar.athena.model.Entity;
 import com.lixar.athena.model.Resource;
 import com.lixar.athena.utility.LogUtil;
@@ -56,7 +56,7 @@ public class AthenaApiInterceptor implements Interceptor {
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        RestCache restCache = CacheFactory.getRestCache(CacheFactory.CacheStorage.SQLITE, context);
+        HttpCache restCache = CacheFactory.getRestCache(CacheFactory.CacheStorage.SQLITE, context);
 
         String authorizationHeaderValue = getApiTokenHeader(chain.request());
         Request original = chain.request();
