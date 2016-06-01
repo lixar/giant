@@ -265,6 +265,8 @@ def _example_primitive_string(schema):
     return _examples.swagger_to_objc_example_string_map[schema['type']][schema.get('format')](schema)
     
 def _response_schema(operation):
+    if 'responses' not in operation:
+        return None
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
             return _get_schema(response['schema'])

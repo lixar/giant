@@ -17,6 +17,15 @@
 {%- endif %}
 
 @implementation {{ definition_name }}
+{%- if 'properties' in definition %}
+{%- for property_name, property in definition.properties.iteritems() %}
+{%- if 'enum' in property and property.type == 'string' %}
+{% for enum in property.enum %}
+NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }} = @"{{ enum }}";
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
 
 - (NSDictionary*)toJSON
 {
@@ -52,6 +61,11 @@
     {%- endif %}
     return model;
 }
-
+{% if 'x-primary-key' in definition %}
++ (NSString *)primaryKey
+{
+    return @"{{ definition['x-primary-key']|camel_case|objc_varname }}";
+}
+{% endif %}
 @end
 {%- endfor %}
