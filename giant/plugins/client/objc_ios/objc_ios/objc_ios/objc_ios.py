@@ -12,6 +12,7 @@ class SwaggerPirate(BaseGiantClient):
         variables = load_variables()
         return {
             'bundle_identifier': variables['bundle_id'],
+            'class_prefix': variables['class_prefix'],
         }
 
     def loader(self):

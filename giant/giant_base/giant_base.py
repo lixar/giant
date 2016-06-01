@@ -213,7 +213,13 @@ class BaseGiant(IPlugin):
             'current_datetime': datetime.utcnow()}
         template_variables.update(self.custom_variables())
         results = template.render(**template_variables).split(_start_of_file_token)
-        if len(results) == 1: # no _start_of_file_token in file.
+        
+        with open(os.path.join(self._main_loader.searchpath[0], template.name), 'r') as template_source:
+            content = template_source.read()
+            multi_file =  'start_of_file' in content
+                
+        if not multi_file:
+            # if len(results) == 1: # no _start_of_file_token in file.
             output_pairs = [('.'.join(template_name.split('.')[:-2]), results[0])]
         else:
             file_results = (StringIO.StringIO(result) for result in results)

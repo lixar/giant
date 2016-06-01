@@ -6,6 +6,15 @@
 {{- ios.file_header(definition_name) }}
 
 #import "{{ definition_name }}.h"
+{%- if 'properties' in definition %}
+{%- for property_name, property in definition.properties.iteritems() %}
+{%- if property.type == 'array' and '$ref' in property['items'] %}
+#import "{{ (property|array_definition_items_type)[:-2] }}.h"
+{%- elif (property.type == 'object' or 'type' not in property) and 'properties' in property %}
+#import "{{ (property|property_type)[:-2] }}.h"
+{%- endif %}
+{%- endfor -%}
+{%- endif %}
 
 @implementation {{ definition_name }}
 
@@ -25,7 +34,20 @@
     {{ definition_name }} *model = [self new];
     {%- if 'properties' in definition -%}
     {%- for property_name, property in definition.properties.iteritems() %}
+    {%- if property.type == 'array' %}
+    model.{{ property_name|camel_case|objc_varname }} = ^{
+        NSArray* array = json[@"{{ property_name }}"];
+        NSMutableArray* items = [NSMutableArray array];
+        for(id<JSONable> jsonable in array) {
+            [items addObject:[{{ (property|array_definition_items_type)[:-2] }} fromJSON:jsonable]];
+        }
+        return [items copy];
+    }();
+    {%- elif property.type == 'object' or 'type' not in property %}
+    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type)[:-2] }} fromJSON:json[@"{{ property_name }}"]];
+    {%- else %}
     model.{{ property_name|camel_case|objc_varname }} = json[@"{{ property_name }}"];
+    {%- endif %}
     {%- endfor -%}
     {%- endif %}
     return model;

@@ -163,22 +163,25 @@ def _ios_attribute_optional(definition, property_name):
         return False
     return property_name in definition['required']
     
+def _realm_property_type(prop):
+    prop = _get_property(prop)
+    if prop['type'] == 'object':
+        return prop['name'] + ' *'
+    value = _swagger_to_realm_map[prop['type']][prop.get('format')]
+    if prop['type'] == 'array':
+        if '$ref' in prop['items']:
+            return value.format(object_type=prop['items']['$ref'].split('/')[-1])
+        items_prop = _get_property(prop['items'])
+        if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
+            items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]
+            return value.format(object_type=items_type)
+        else:
+            return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
+    return value
+    
 def _property_type(prop):
-    if 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
-        prop = _get_property(prop)
-        if prop['type'] == 'object':
-            return prop['name'] + ' *'
-        value = _swagger_to_realm_map[prop['type']][prop.get('format')]
-        if prop['type'] == 'array':
-            if '$ref' in prop['items']:
-                return value.format(object_type=prop['items']['$ref'].split('/')[-1])
-            items_prop = _get_property(prop['items'])
-            if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
-                items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]
-                return value.format(object_type=items_type)
-            else:
-                return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
-        return value
+    if 'definition' in prop and 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
+        return _realm_property_type(prop)
     prop = _get_property(prop)
     return _swagger_to_objc_map[prop['type']][prop.get('format')]
     
@@ -214,6 +217,16 @@ def _definition_type(schema):
         return 'NSArray<{}> *'.format(_definition_type(schema['items']))
     else:
         return _property_type(schema)
+        
+def _array_definition_items_type(schema):
+    schema = _get_schema(schema)
+    if 'definition' in schema and 'x-persist' in schema['definition']:
+        try:
+            items = _get_schema(schema['items'])
+            return _swagger_to_realm_wrapper_map[items['type']][items.get('format')]
+        except StandardError as e:
+            pass
+    return _definition_type(schema['items'])
         
 def _example_definition(schema):
     schema = _get_schema(schema)
@@ -251,11 +264,17 @@ def _example_primitive(schema):
 def _example_primitive_string(schema):
     return _examples.swagger_to_objc_example_string_map[schema['type']][schema.get('format')](schema)
     
-def _response_type(operation):
+def _response_schema(operation):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
-            return _definition_type(response['schema'])
-    return ''
+            return _get_schema(response['schema'])
+    return None
+    
+def _response_type(operation):
+    schema = _response_schema(operation)
+    if schema == None:
+        return ''
+    return _definition_type(schema)
             
 def _objc_method_signature(operation):
     param_signature = '{param_name}:({param_type}){param_name_lower}'
@@ -425,7 +444,9 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('model_base_type', _model_base_type),
     ('realm_property_import', _realm_property_import),
     ('response_type_forward_decl', _response_type_forward_decl),
-    ('response_type_import', _response_type_import)
+    ('response_type_import', _response_type_import),
+    ('response_schema', _response_schema),
+    ('array_definition_items_type', _array_definition_items_type)
 )
     
     

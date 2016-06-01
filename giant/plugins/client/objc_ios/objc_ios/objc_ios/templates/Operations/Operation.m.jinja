@@ -285,12 +285,15 @@
 
 - (void)setResponseObject:(id)responseObject
 {
-    if([responseObject isMemberOfClass:[{{ (operation|response_type)[:-2] }} class]]) {
-        [super setResponseObject:responseObject];
+    {%- if (operation|response_schema).type == 'array' %}
+    NSMutableArray* objects = [NSMutableArray array];
+    for(id<JSONable> jsonable in responseObject) {
+        [objects addObject:[{{ (operation|response_schema|array_definition_items_type)[:-2] }} fromJSON:jsonable]];
     }
-    else {
-        [super setResponseObject:[{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
-    }
+    [super setResponseObject:[objects copy]];
+    {% else %}
+    [super setResponseObject:[{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
+    {%- endif %}
 }
 {%- endif %}
 

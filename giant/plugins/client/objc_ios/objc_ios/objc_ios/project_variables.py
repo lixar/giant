@@ -13,6 +13,7 @@ def load_variables():
     else:
         _config = {
             'bundle_id': str('com.bundle.identifier'),
+            'class_prefix': 'GNT'
         }
         with open(os.path.join(os.getcwd(), 'ios.config'), 'w') as config_json:
             json.dump(_config, config_json)
