@@ -15,13 +15,27 @@
 {%- endif -%}
 {%- endfor -%}
 {%- endif %}
+{%- if 'properties' in definition -%}
+{%- for property_name, property in definition.properties.iteritems() %}
+{%- if 'enum' in property and property.type == 'string' %}
 
-@interface {{ definition_name }}: {{ definition|model_base_type }} <JSONable>
-{% if 'properties' in definition %}
-{% for property_name, property in definition.properties.iteritems() %}
-@property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
+typedef enum : NSUInteger {
+    {%- for enum in property.enum %}
+    {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }},
+    {%- endfor %}
+} {{ definition_name }}{{ property_name|pascal_case }};
+{% endif -%}
 {%- endfor %}
 {% endif %}
+@interface {{ definition_name }}: {{ definition|model_base_type }} <JSONable>
+{% if 'properties' in definition %}
+{%- for property_name, property in definition.properties.iteritems() %}
+@property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
+{%- if 'enum' in property and property.type == 'string' %}
+@property (nonatomic, assign) {{ definition_name }}{{ property_name|pascal_case }} {{ (definition_name + property_name|pascal_case)|camel_case|objc_varname }};
+{%- endif %}
+{%- endfor %}
+{%- endif %}
 
 - (NSDictionary*)toJSON;
 

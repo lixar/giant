@@ -52,6 +52,22 @@
     {%- endif %}
     return model;
 }
-
+{% if 'properties' in definition %}
+{%- for property_name, property in definition.properties.iteritems() if 'enum' in property and property.type == 'string' %}
+- ({{ definition_name }}{{ property_name|pascal_case }}){{ (definition_name + property_name|pascal_case)|camel_case|objc_varname }}
+{
+    return ((NSNumber*)@{
+    {%- for enum in property.enum %}
+        {%- if property.type == 'string' %}
+        {%- set enum_key = '@"' + enum + '"' %}
+        {%- else %}
+        {%- set enum_key = '@(' + enum + ')' %}
+        {%- endif %}
+        {{ enum_key }}: @({{ definition_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }}),
+    {%- endfor %}
+    }[self.{{ property_name|camel_case|objc_varname }}]).unsignedIntegerValue;
+}
+{% endfor %}
+{%- endif %}
 @end
 {%- endfor %}
