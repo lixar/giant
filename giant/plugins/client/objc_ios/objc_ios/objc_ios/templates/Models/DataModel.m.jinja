@@ -52,10 +52,8 @@ NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pas
         }
         return [items copy];
     }();
-    {%- elif property.type == 'object' or 'type' not in property %}
-    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type)[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- else %}
-    model.{{ property_name|camel_case|objc_varname }} = json[@"{{ property_name }}"];
+    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type)[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- endif %}
     {%- endfor -%}
     {%- endif %}
