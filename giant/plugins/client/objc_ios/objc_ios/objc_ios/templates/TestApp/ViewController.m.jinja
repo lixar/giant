@@ -1,23 +1,23 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/ViewController')|start_of_file -}}
-{{- ios.file_header('ViewController.m') }}
-#import "ViewController.h"
+{{ (vars.api_name + '/' + class_prefix + 'ViewController')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'ViewController.m') }}
+#import "{{ class_prefix }}ViewController.h"
 #import <AFNetworking/AFNetworking.h>
 {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
-#import "{{ definition_name }}.h"
+#import "{{ class_prefix }}{{ definition_name }}.h"
 {% endfor %}
 {% for operation_name in operations -%}
-#import "{{ operation_name|pascal_case }}Operation.h"
+#import "{{ class_prefix }}{{ operation_name|pascal_case }}Operation.h"
 {% endfor %}
 
-@interface ViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface {{ class_prefix }}ViewController () <UITableViewDelegate, UITableViewDataSource>
 
 @property (nonatomic, weak) IBOutlet UITextView* logOutputView;
 
 @end
 
-@implementation ViewController
+@implementation {{ class_prefix }}ViewController
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
@@ -62,18 +62,18 @@
         {%- for operation_name, operation in operations.iteritems() %}
         
         case {{ loop.index - 1 }}: {
-            __block {{ operation_name|pascal_case }}Operation* operation = [{{ operation_name|pascal_case }}Operation operationWithBuilderBlock:^({{ operation_name|pascal_case }}OperationBuilder *builder) {
+            __block {{ class_prefix }}{{ operation_name|pascal_case }}Operation* operation = [{{ class_prefix }}{{ operation_name|pascal_case }}Operation operationWithBuilderBlock:^({{ class_prefix }}{{ operation_name|pascal_case }}OperationBuilder *builder) {
                 {%- if operation.parameters is not undefined -%}
                 {%- for param in operation.parameters %}
                 builder.{{ (param|get_parameter).name|camel_case }} = {{ param|example_parameter }};
                 {%- endfor %}
                 {%- endif %}
             }];
-            __weak ViewController* weakSelf = self;
+            __weak {{ class_prefix }}ViewController* weakSelf = self;
             operation.completionBlock = ^{
                 if(operation.error == nil) {
                     {% if 'x-provides-api-key' in operation -%}
-                    [Operation setApiKey:operation.responseObject.accessToken forSecurityDefinition:@"{{ operation['x-provides-api-key'] }}"];
+                    [{{ class_prefix }}Operation setApiKey:operation.responseObject.accessToken forSecurityDefinition:@"{{ operation['x-provides-api-key'] }}"];
                     {%- endif %}
                     [weakSelf logSuccess:nil operationName:@"{{ operation_name }}"];
                 }

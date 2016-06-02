@@ -1,13 +1,14 @@
 {% import 'variables.jinja' as vars with context %}
 {% import 'variables-ios.jinja' as ios with context %}
 {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}
-{{ (vars.api_name + '/Models/' + definition_name)|start_of_file -}}
-{{- ios.file_header(definition_name) }}
+{%- set class_name = class_prefix+definition_name -%}
+{{ (vars.api_name + '/Models/' + class_name)|start_of_file -}}
+{{- ios.file_header(class_name) }}
 #import <Foundation/Foundation.h>
-#import "JSONable.h"
+#import "{{ class_prefix }}JSONable.h"
 {% if 'x-persist' in definition and definition['x-persist'] -%}
 #import <Realm/Realm.h>
-#import "RealmPrimitives.h"
+#import "{{ class_prefix }}RealmPrimitives.h"
 {%- for property_name, property in definition.properties.iteritems() -%}
 {%- set prop_import = property|realm_property_import -%}
 {%- if prop_import is not none %}
@@ -19,13 +20,13 @@
 {%- for property_name, property in definition.properties.iteritems() %}
 {%- if 'enum' in property and property.type == 'string' %}
 {% for enum in property.enum %}
-extern NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }};
+extern NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }};
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
 {%- endif %}
 
-@interface {{ definition_name }}: {{ definition|model_base_type }} <JSONable>
+@interface {{ class_name }}: {{ definition|model_base_type }} <{{ class_prefix }}JSONable>
 {% if 'properties' in definition %}
 {%- for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type }} {{ property_name|camel_case|objc_varname }};
@@ -36,6 +37,6 @@ extern NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ e
 
 @end
 {%- if 'x-persist' in definition and definition['x-persist'] %}
-RLM_ARRAY_TYPE({{ definition_name }})
+RLM_ARRAY_TYPE({{ class_name }})
 {%- endif -%}
 {%- endfor %}

@@ -407,24 +407,24 @@ def _realm_property_import(prop):
         return '#import "{}.h"'.format(prop['name'])
     return None
     
-def _response_type_forward_decl(operation):
+def _response_type_forward_decl(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
             schema = _get_schema(response['schema'])
             if 'type' not in schema or schema['type'] == 'object':
-                return '@class ' + schema['name'] + ';'
+                return '@class ' + prefix + schema['name'] + ';'
             elif schema['type'] == 'array' and '$ref' in schema['items']:
-                return '@class ' + schema['items']['$ref'].split('/')[-1] + ';'
+                return '@class ' + prefix + schema['items']['$ref'].split('/')[-1] + ';'
     return ''
     
-def _response_type_import(operation):
+def _response_type_import(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
             schema = _get_schema(response['schema'])
             if 'type' not in schema or schema['type'] == 'object':
-                return '#import "' + schema['name'] + '.h"'
+                return '#import "' + prefix + schema['name'] + '.h"'
             elif schema['type'] == 'array' and '$ref' in schema['items']:
-                return '#import "' + schema['items']['$ref'].split('/')[-1] + '.h"'
+                return '#import "' + prefix + schema['items']['$ref'].split('/')[-1] + '.h"'
     return ''
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),

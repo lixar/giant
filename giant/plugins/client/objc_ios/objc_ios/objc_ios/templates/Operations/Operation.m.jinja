@@ -1,13 +1,13 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/Operations/Operation')|start_of_file -}}
-{{- ios.file_header('OperationBuilder.h') }}
+{{ (vars.api_name + '/Operations/' + class_prefix + 'Operation')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'OperationBuilder.h') }}
 
-#import "Operation.h"
+#import "{{ class_prefix }}Operation.h"
 #import <AFNetworking/AFNetworking.h>
-#import "JSONable.h"
+#import "{{ class_prefix }}JSONable.h"
 
-@interface Operation ()
+@interface {{ class_prefix }}Operation ()
 
 @property (atomic, strong) NSURLSessionDataTask *task;
 @property (nonatomic, getter = isFinished, readwrite)  BOOL finished;
@@ -15,7 +15,7 @@
 
 @end
 
-@implementation Operation
+@implementation {{ class_prefix }}Operation
 
 @synthesize finished  = _finished;
 @synthesize executing = _executing;
@@ -36,7 +36,7 @@
     id parameters;
     if(self.consumesJSON) {
         serializer = self.class.jsonSerializer;
-        id<JSONable> jsonable = self.parameters;
+        id<{{ class_prefix }}JSONable> jsonable = self.parameters;
         parameters = [jsonable toJSON];
     }
     else {
@@ -78,7 +78,7 @@
         }
     }
     
-    __weak Operation* weakSelf = self;
+    __weak {{ class_prefix }}Operation* weakSelf = self;
     
     if(self.securityDefinition != nil) {
         [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
@@ -146,7 +146,7 @@
     self.apiKeys[securityName] = token;
 }
 
-+ (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock
++ (instancetype)operationWithBuilderBlock:(void(^)(id<{{ class_prefix }}OperationBuilder> *builder))builderBlock
 {
     [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
     return nil;
@@ -259,25 +259,25 @@
 @end
 
 {%- for operation_name, operation in operations.iteritems() -%}
-{%- set operation_name = operation_name|pascal_case -%}
-{{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
-{{- ios.file_header(operation_name+'Operation.m') }}
+{%- set class_name = class_prefix + (operation_name|pascal_case) + 'Operation' -%}
+{{ (vars.api_name + '/Operations/' + class_name)|start_of_file -}}
+{{- ios.file_header(class_name+'.m') }}
 
-#import "{{ operation_name }}Operation.h"
-#import "{{ operation_name }}OperationBuilder.h"
+#import "{{ class_name }}.h"
+#import "{{ class_name }}Builder.h"
 #import <AFNetworking/AFNetworking.h>
-{%- set response_import = operation|response_type_import -%}
+{%- set response_import = operation|response_type_import(class_prefix) -%}
 {%- if response_import != '' %}
 {{ response_import }}
 {%- endif %}
 
-@interface {{ operation_name }}Operation ()
+@interface {{ class_name }} ()
 
-@property (nonatomic, copy) {{ operation_name }}OperationBuilder *builder;
+@property (nonatomic, copy) {{ class_name }}Builder *builder;
 
 @end
 
-@implementation {{ operation_name }}Operation 
+@implementation {{ class_name }} 
 
 {%- if (operation|response_type) != '' %}
 
@@ -292,19 +292,19 @@
     }
     [super setResponseObject:[objects copy]];
     {% else %}
-    [super setResponseObject:[{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
+    [super setResponseObject:[{{ class_prefix }}{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
     {%- endif %}
 }
 {%- endif %}
 
-+ (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock
++ (instancetype)operationWithBuilderBlock:(void(^)({{ class_name }}Builder *builder))builderBlock
 {
-    {{ operation_name }}OperationBuilder *builder = [{{ operation_name }}OperationBuilder new];
+    {{ class_name }}Builder *builder = [{{ class_name }}Builder new];
     builderBlock(builder);
     return [builder build];
 }
 
-- (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder
+- (instancetype)initWithBuilder:({{ class_name }}Builder *)builder
 {
     if((self = [super init]) == nil) return nil;
     

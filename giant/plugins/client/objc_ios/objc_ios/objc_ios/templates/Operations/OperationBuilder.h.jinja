@@ -1,35 +1,36 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/Operations/OperationBuilder')|start_of_file -}}
-{{- ios.file_header('OperationBuilder.h') }}
+{%- set class_name = class_prefix + 'OperationBuilder' -%}
+{{ (vars.api_name + '/Operations/' + class_name)|start_of_file -}}
+{{- ios.file_header(class_name + '.h') }}
 
 #import <Foundation/Foundation.h>
 
-@class Operation;
+@class {{ class_prefix }}Operation;
 
-@protocol OperationBuilder <NSCopying>
+@protocol {{ class_name }} <NSCopying>
 
 @required
-- (Operation *)build;
+- ({{ class_prefix }}Operation *)build;
 
 @end
 
 {%- for operation_name, operation in operations.iteritems() -%}
-{%- set operation_name = operation_name|pascal_case -%}
-{{ (vars.api_name + '/Operations/' + operation_name + 'OperationBuilder')|start_of_file -}}
-{{- ios.file_header(operation_name+'OperationBuilder.h') }}
-#import "OperationBuilder.h"
+{%- set class_name = class_prefix + (operation_name|pascal_case) + 'OperationBuilder' -%}
+{{ (vars.api_name + '/Operations/' + class_name)|start_of_file -}}
+{{- ios.file_header(class_name+'.h') }}
+#import "{{ class_prefix }}OperationBuilder.h"
 
-@class {{ operation_name }}Operation;
+@class {{ class_name[:-7] }};
 
 {%- set body_params = operation|parameters_in('body') %}
 {%- if body_params|length > 0 %}
 @class {{ (body_params|first|parameter_type)[:-2] }};
 {%- endif %}
 
-@interface {{ operation_name }}OperationBuilder: NSObject <OperationBuilder>
+@interface {{ class_name }}: NSObject <{{ class_prefix }}OperationBuilder>
 
-- ({{ operation_name }}Operation *)build;
+- ({{ class_name[:-7] }} *)build;
 
 {% for param in operation.parameters -%}
 {{ param|objc_property }}

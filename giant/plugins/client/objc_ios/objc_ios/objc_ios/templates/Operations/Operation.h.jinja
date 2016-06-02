@@ -1,14 +1,14 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{- (vars.api_name + '/Operations/Operation')|start_of_file -}}
-{{- ios.file_header('Operation.h') }}
+{{- (vars.api_name + '/Operations/' + class_prefix + 'Operation')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'Operation.h') }}
 
 #import <Foundation/Foundation.h>
-#import "OperationBuilder.h"
+#import "{{ class_prefix }}OperationBuilder.h"
 
-@protocol OperationProtocol <NSObject>
+@protocol {{ class_prefix }}OperationProtocol <NSObject>
 
-+ (instancetype)operationWithBuilderBlock:(void(^)(id<OperationBuilder> *builder))builderBlock;
++ (instancetype)operationWithBuilderBlock:(void(^)(id<{{ class_prefix }}OperationBuilder> *builder))builderBlock;
 
 @property (nonatomic, copy, readonly) NSString* method;
 @property (nonatomic, copy, readonly) NSString* URLString;
@@ -22,7 +22,7 @@
 
 @class AFHTTPSessionManager, AFHTTPRequestSerializer;
 
-@interface Operation: NSOperation <OperationProtocol>
+@interface {{ class_prefix }}Operation: NSOperation <{{ class_prefix }}OperationProtocol>
 
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName;
 
@@ -36,25 +36,26 @@
 
 {%- for operation_name, operation in operations.iteritems() -%}
 {%- set operation_name = operation_name|pascal_case -%}
-{{ (vars.api_name + '/Operations/' + operation_name + 'Operation')|start_of_file -}}
-{{- ios.file_header(operation_name+'Operation.h') }}
-#import "Operation.h"
-#import "{{ operation_name }}OperationBuilder.h"
-{%- set forward_decl = operation|response_type_forward_decl %}
+{%- set class_name = class_prefix + operation_name + 'Operation' -%}
+{{ (vars.api_name + '/Operations/' + class_name)|start_of_file -}}
+{{- ios.file_header(class_name + '.h') }}
+#import "{{ class_prefix }}Operation.h"
+#import "{{ class_name }}Builder.h"
+{%- set forward_decl = operation|response_type_forward_decl(class_prefix) %}
 
 {%- if forward_decl != '' %}
 
 {{ forward_decl }}
 {%- endif %}
 
-@interface {{operation_name}}Operation: Operation <OperationProtocol>
+@interface {{ class_name }}: {{ class_prefix }}Operation <{{ class_prefix }}OperationProtocol>
 
-+ (instancetype)operationWithBuilderBlock:(void(^)({{ operation_name }}OperationBuilder *builder))builderBlock;
++ (instancetype)operationWithBuilderBlock:(void(^)({{ class_name }}Builder *builder))builderBlock;
 
-- (instancetype)initWithBuilder:({{ operation_name }}OperationBuilder *)builder;
+- (instancetype)initWithBuilder:({{ class_name }}Builder *)builder;
 
 {% if (operation|response_type) != '' -%}
-@property (nonatomic, strong) {{ operation|response_type }} responseObject;
+@property (nonatomic, strong) {{ class_prefix }}{{ operation|response_type }} responseObject;
 
 {% endif -%}
 @end
