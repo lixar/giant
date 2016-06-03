@@ -14,7 +14,7 @@ def load_variables():
         _config = {
             'bundle_identifier': str('com.bundle.identifier'),
             'class_prefix': 'GNT',
-            'ios.project_name': None
+            'project_name': None
         }
         for key in _config.keys():
             new_value = raw_input('{} [{}]: '.format(key, _config[key]))

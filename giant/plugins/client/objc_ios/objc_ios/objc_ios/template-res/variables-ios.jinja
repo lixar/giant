@@ -1,6 +1,8 @@
 {% import 'variables.jinja' as vars with context %}
 {% if project_name is none %}
 {% set project_name = vars.api_name %}
+{% else %}
+{% set project_name = project_name %}
 {% endif %}
 {% macro file_header(filename) -%}
 //
