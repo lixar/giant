@@ -1,5 +1,6 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
+{{- (ios.project_name + '.xcodeproj/project')|start_of_file -}}
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
@@ -33,7 +34,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CE6BCEE51CD019B100B6ED29 /* {{ vars.api_name }}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "{{ vars.api_name }}.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE6BCEE51CD019B100B6ED29 /* {{ ios.project_name }}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "{{ ios.project_name }}.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE6BCEE91CD019B100B6ED29 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CE6BCEEB1CD019B100B6ED29 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CE6BCEEC1CD019B100B6ED29 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -87,7 +88,7 @@
 		CE6BCEDC1CD019B100B6ED29 = {
 			isa = PBXGroup;
 			children = (
-				CE6BCEE71CD019B100B6ED29 /* {{ vars.api_name }} */,
+				CE6BCEE71CD019B100B6ED29 /* {{ ios.project_name }} */,
 				CE6BCEE61CD019B100B6ED29 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -95,12 +96,12 @@
 		CE6BCEE61CD019B100B6ED29 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CE6BCEE51CD019B100B6ED29 /* {{ vars.api_name }}.app */,
+				CE6BCEE51CD019B100B6ED29 /* {{ ios.project_name }}.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		CE6BCEE71CD019B100B6ED29 /* {{ vars.api_name }} */ = {
+		CE6BCEE71CD019B100B6ED29 /* {{ ios.project_name }} */ = {
 			isa = PBXGroup;
 			children = (
 				CEA622081CE20BCB00CBA925 /* Models */,
@@ -109,7 +110,7 @@
 				CE49F3191CEA4F6300C06FFD /* TestApp */,
 				CE49F3181CEA4F5D00C06FFD /* Utility */,
 			);
-			path = "{{ vars.api_name }}";
+			path = "{{ ios.project_name }}";
 			sourceTree = "<group>";
 		};
 		CE49F3191CEA4F6300C06FFD /* TestApp */ = {
@@ -185,9 +186,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CE6BCEE41CD019B100B6ED29 /* {{ vars.api_name }} */ = {
+		CE6BCEE41CD019B100B6ED29 /* {{ ios.project_name }} */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE6BCEFF1CD019B100B6ED29 /* Build configuration list for PBXNativeTarget "{{ vars.api_name }}" */;
+			buildConfigurationList = CE6BCEFF1CD019B100B6ED29 /* Build configuration list for PBXNativeTarget "{{ ios.project_name }}" */;
 			buildPhases = (
 				CE6BCEE11CD019B100B6ED29 /* Sources */,
 				CE6BCEE21CD019B100B6ED29 /* Frameworks */,
@@ -197,9 +198,9 @@
 			);
 			dependencies = (
 			);
-			name = "{{ vars.api_name }}";
-			productName = "{{ vars.api_name }}";
-			productReference = CE6BCEE51CD019B100B6ED29 /* {{ vars.api_name }}.app */;
+			name = "{{ ios.project_name }}";
+			productName = "{{ ios.project_name }}";
+			productReference = CE6BCEE51CD019B100B6ED29 /* {{ ios.project_name }}.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -216,7 +217,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CE6BCEE01CD019B100B6ED29 /* Build configuration list for PBXProject "{{ vars.api_name }}" */;
+			buildConfigurationList = CE6BCEE01CD019B100B6ED29 /* Build configuration list for PBXProject "{{ ios.project_name }}" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -229,7 +230,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CE6BCEE41CD019B100B6ED29 /* {{ vars.api_name }} */,
+				CE6BCEE41CD019B100B6ED29 /* {{ ios.project_name }} */,
 			);
 		};
 /* End PBXProject section */
@@ -383,7 +384,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_FILE = "{{ vars.api_name }}/Info.plist";
+				INFOPLIST_FILE = "{{ ios.project_name }}/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "{{ bundle_identifier }}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -394,7 +395,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_FILE = "{{ vars.api_name }}/Info.plist";
+				INFOPLIST_FILE = "{{ ios.project_name }}/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "{{ bundle_identifier }}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -404,7 +405,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CE6BCEE01CD019B100B6ED29 /* Build configuration list for PBXProject "{{ vars.api_name }}" */ = {
+		CE6BCEE01CD019B100B6ED29 /* Build configuration list for PBXProject "{{ ios.project_name }}" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE6BCEFD1CD019B100B6ED29 /* Debug */,
@@ -413,7 +414,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE6BCEFF1CD019B100B6ED29 /* Build configuration list for PBXNativeTarget "{{ vars.api_name }}" */ = {
+		CE6BCEFF1CD019B100B6ED29 /* Build configuration list for PBXNativeTarget "{{ ios.project_name }}" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE6BCF001CD019B100B6ED29 /* Debug */,

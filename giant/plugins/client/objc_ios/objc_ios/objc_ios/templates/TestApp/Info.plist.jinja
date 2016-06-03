@@ -1,5 +1,6 @@
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/Info')|start_of_file -}}
+{% import 'variables-ios.jinja' as ios with context %}
+{{ (ios.project_name + '/Info')|start_of_file -}}
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

@@ -1,10 +1,11 @@
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/DataModel.xcdatamodels/.xccurrentversion')|start_of_file -}}
+{% import 'variables-ios.jinja' as ios with context %}
+{{ (ios.project_name + '/DataModel.xcdatamodels/.xccurrentversion')|start_of_file -}}
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>_XCCurrentVersionName</key>
-	<string>{{ vars.api_name }}.xcdatamodel</string>
+	<string>{{ ios.project_name }}.xcdatamodel</string>
 </dict>
 </plist>

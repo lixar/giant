@@ -1,8 +1,9 @@
 {% import 'variables.jinja' as vars with context %}
+{% import 'variables-ios.jinja' as ios with context %}
 source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, '8.0'
 
-target '{{ vars.api_name }}' do
+target '{{ ios.project_name }}' do
   pod 'AFNetworking', '~> 3.0'
   pod 'Realm'
 end

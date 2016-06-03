@@ -1,6 +1,6 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/Operations/' + class_prefix + 'Operation')|start_of_file -}}
+{{ (ios.project_name + '/Operations/' + class_prefix + 'Operation')|start_of_file -}}
 {{- ios.file_header(class_prefix + 'OperationBuilder.h') }}
 
 #import "{{ class_prefix }}Operation.h"
@@ -260,7 +260,7 @@
 
 {%- for operation_name, operation in operations.iteritems() -%}
 {%- set class_name = class_prefix + (operation_name|pascal_case) + 'Operation' -%}
-{{ (vars.api_name + '/Operations/' + class_name)|start_of_file -}}
+{{ (ios.project_name + '/Operations/' + class_name)|start_of_file -}}
 {{- ios.file_header(class_name+'.m') }}
 
 #import "{{ class_name }}.h"

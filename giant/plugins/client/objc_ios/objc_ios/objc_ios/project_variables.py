@@ -12,9 +12,15 @@ def load_variables():
             _config = json.load(config_json)
     else:
         _config = {
-            'bundle_id': str('com.bundle.identifier'),
-            'class_prefix': 'GNT'
+            'bundle_identifier': str('com.bundle.identifier'),
+            'class_prefix': 'GNT',
+            'ios.project_name': None
         }
+        for key in _config.keys():
+            new_value = raw_input('{} [{}]: '.format(key, _config[key]))
+            if new_value == '':
+                continue
+            _config[key] = new_value
         with open(os.path.join(os.getcwd(), 'ios.config'), 'w') as config_json:
             json.dump(_config, config_json)
     return _config

@@ -1,6 +1,6 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/' + class_prefix + 'JSONable')|start_of_file -}}
+{{ (ios.project_name + '/' + class_prefix + 'JSONable')|start_of_file -}}
 {{- ios.file_header(class_prefix + 'JSONable.m') }}
 #import <Foundation/Foundation.h>
 #import "{{ class_prefix }}JSONable.h"

@@ -1,5 +1,6 @@
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/DataModel.xcdatamodeld/DataModel.xcdatamodel/contents')|start_of_file -}}
+{% import 'variables-ios.jinja' as ios with context %}
+{{ (ios.project_name + '/DataModel.xcdatamodeld/DataModel.xcdatamodel/contents')|start_of_file -}}
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10171" systemVersion="15C50" minimumToolsVersion="Automatic">
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}

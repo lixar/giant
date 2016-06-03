@@ -9,11 +9,7 @@ class SwaggerPirate(BaseGiantClient):
 
     def custom_variables(self):
         '''Additional variables to make available to your templates.'''
-        variables = load_variables()
-        return {
-            'bundle_identifier': variables['bundle_id'],
-            'class_prefix': variables['class_prefix'],
-        }
+        return load_variables()
 
     def loader(self):
         '''Returns the Jinja2 template loader for your templates.'''
