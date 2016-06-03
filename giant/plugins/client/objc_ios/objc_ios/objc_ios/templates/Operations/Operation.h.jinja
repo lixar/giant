@@ -54,8 +54,8 @@
 
 - (instancetype)initWithBuilder:({{ class_name }}Builder *)builder;
 
-{% if (operation|response_type) != '' -%}
-@property (nonatomic, strong) {{ class_prefix }}{{ operation|response_type }} responseObject;
+{% if (operation|response_type(class_prefix)) != '' -%}
+@property (nonatomic, strong) {{ operation|response_type(class_prefix) }} responseObject;
 
 {% endif -%}
 @end

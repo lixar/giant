@@ -279,7 +279,7 @@
 
 @implementation {{ class_name }} 
 
-{%- if (operation|response_type) != '' %}
+{%- if (operation|response_type(class_prefix)) != '' %}
 
 @dynamic responseObject;
 
@@ -287,12 +287,12 @@
 {
     {%- if (operation|response_schema).type == 'array' %}
     NSMutableArray* objects = [NSMutableArray array];
-    for(id<JSONable> jsonable in responseObject) {
-        [objects addObject:[{{ (operation|response_schema|array_definition_items_type)[:-2] }} fromJSON:jsonable]];
+    for(id<{{ class_prefix }}JSONable> jsonable in responseObject) {
+        [objects addObject:[{{ (operation|response_schema|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
     }
     [super setResponseObject:[objects copy]];
     {% else %}
-    [super setResponseObject:[{{ class_prefix }}{{ (operation|response_type)[:-2] }} fromJSON:responseObject]];
+    [super setResponseObject:[{{ (operation|response_type(class_prefix))[:-2] }} fromJSON:responseObject]];
     {%- endif %}
 }
 {%- endif %}

@@ -25,7 +25,7 @@
 
 {%- set body_params = operation|parameters_in('body') %}
 {%- if body_params|length > 0 %}
-@class {{ (body_params|first|parameter_type)[:-2] }};
+@class {{ (body_params|first|parameter_type(class_prefix))[:-2] }};
 {%- endif %}
 
 @interface {{ class_name }}: NSObject <{{ class_prefix }}OperationBuilder>
@@ -33,7 +33,7 @@
 - ({{ class_name[:-7] }} *)build;
 
 {% for param in operation.parameters -%}
-{{ param|objc_property }}
+{{ param|objc_property(class_prefix) }}
 {% endfor %}
 @end
 {%- endfor -%}

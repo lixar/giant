@@ -65,7 +65,7 @@
             __block {{ class_prefix }}{{ operation_name|pascal_case }}Operation* operation = [{{ class_prefix }}{{ operation_name|pascal_case }}Operation operationWithBuilderBlock:^({{ class_prefix }}{{ operation_name|pascal_case }}OperationBuilder *builder) {
                 {%- if operation.parameters is not undefined -%}
                 {%- for param in operation.parameters %}
-                builder.{{ (param|get_parameter).name|camel_case }} = {{ param|example_parameter }};
+                builder.{{ (param|get_parameter).name|camel_case }} = {{ param|example_parameter(class_prefix) }};
                 {%- endfor %}
                 {%- endif %}
             }];
