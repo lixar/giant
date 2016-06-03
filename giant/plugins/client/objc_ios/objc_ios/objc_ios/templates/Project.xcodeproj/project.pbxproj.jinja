@@ -11,23 +11,23 @@
 /* Begin PBXBuildFile section */
 		CE6BCEEA1CD019B100B6ED29 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEE91CD019B100B6ED29 /* main.m */; };
 		CE6BCEED1CD019B100B6ED29 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEEC1CD019B100B6ED29 /* AppDelegate.m */; };
-		CE6BCEF01CD019B100B6ED29 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEEF1CD019B100B6ED29 /* ViewController.m */; };
+		CE6BCEF01CD019B100B6ED29 /* {{ class_prefix }}ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEEF1CD019B100B6ED29 /* {{ class_prefix }}ViewController.m */; };
 		CE6BCEF31CD019B100B6ED29 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF11CD019B100B6ED29 /* Main.storyboard */; };
 		CE6BCEF61CD019B100B6ED29 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */; };
 		CE6BCEF81CD019B100B6ED29 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */; };
 		CE6BCEFB1CD019B100B6ED29 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE6BCEF91CD019B100B6ED29 /* LaunchScreen.storyboard */; };
-    CEA622071CE111EA00CBA925 /* NSDate+ISO8601.m in Sources */ = {isa = PBXBuildFile; fileRef = CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */; };
-		CE7764CA1CE38094005B1BE7 /* Operation.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7764C81CE38094005B1BE7 /* Operation.m */; };
-    CEAA10861CE5301300515F44 /* JSONable.m in Sources */ = {isa = PBXBuildFile; fileRef = CEAA10851CE5301300515F44 /* JSONable.m */; };
-    CE7B9FA91CE606610016C7EB /* RealmPrimitives.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7B9FA81CE606610016C7EB /* RealmPrimitives.m */; };
+    CEA622071CE111EA00CBA925 /* NSDate+{{ class_prefix }}ISO8601.m in Sources */ = {isa = PBXBuildFile; fileRef = CEA622061CE111EA00CBA925 /* NSDate+{{ class_prefix }}ISO8601.m */; };
+		CE7764CA1CE38094005B1BE7 /* {{ class_prefix }}Operation.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7764C81CE38094005B1BE7 /* {{ class_prefix }}Operation.m */; };
+    CEAA10861CE5301300515F44 /* {{ class_prefix }}JSONable.m in Sources */ = {isa = PBXBuildFile; fileRef = CEAA10851CE5301300515F44 /* {{ class_prefix }}JSONable.m */; };
+    CE7B9FA91CE606610016C7EB /* {{ class_prefix }}RealmPrimitives.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7B9FA81CE606610016C7EB /* {{ class_prefix }}RealmPrimitives.m */; };
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
-    {% set file_name = (definition_name + '.m') %}
+    {% set file_name = (class_prefix + definition_name + '.m') %}
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
     {% endfor %}
     {%- for operation_name, operation in operations.iteritems() -%}
-    {%- set file_name = (operation_name|pascal_case) + 'Operation.m' -%}
+    {%- set file_name = (class_prefix + operation_name|pascal_case) + 'Operation.m' -%}
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
-    {%- set file_name = (operation_name|pascal_case) + 'OperationBuilder.m' -%}
+    {%- set file_name = (class_prefix + operation_name|pascal_case) + 'OperationBuilder.m' -%}
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
     {% endfor %}
 /* End PBXBuildFile section */
@@ -37,37 +37,37 @@
 		CE6BCEE91CD019B100B6ED29 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CE6BCEEB1CD019B100B6ED29 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CE6BCEEC1CD019B100B6ED29 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		CE6BCEEE1CD019B100B6ED29 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		CE6BCEEF1CD019B100B6ED29 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		CE6BCEEE1CD019B100B6ED29 /* {{ class_prefix }}ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = {{ class_prefix }}ViewController.h; sourceTree = "<group>"; };
+		CE6BCEEF1CD019B100B6ED29 /* {{ class_prefix }}ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = {{ class_prefix }}ViewController.m; sourceTree = "<group>"; };
 		CE6BCEF21CD019B100B6ED29 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		CE6BCEF51CD019B100B6ED29 /* DataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DataModel.xcdatamodel; sourceTree = "<group>"; };
 		CE6BCEF71CD019B100B6ED29 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE6BCEFA1CD019B100B6ED29 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CE6BCEFC1CD019B100B6ED29 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CEA622051CE111EA00CBA925 /* NSDate+ISO8601.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+ISO8601.h"; sourceTree = "<group>"; };
-		CEA622061CE111EA00CBA925 /* NSDate+ISO8601.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+ISO8601.m"; sourceTree = "<group>"; };
-		CE7764C71CE38094005B1BE7 /* Operation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Operation.h; path = Operations/Operation.h; sourceTree = "<group>"; };
-		CE7764C81CE38094005B1BE7 /* Operation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Operation.m; path = Operations/Operation.m; sourceTree = "<group>"; };
-		CE7764C91CE38094005B1BE7 /* OperationBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OperationBuilder.h; path = Operations/OperationBuilder.h; sourceTree = "<group>"; };
-    CE7764F71CE4F4E0005B1BE7 /* JSONable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSONable.h; sourceTree = "<group>"; };
-    CEAA10851CE5301300515F44 /* JSONable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSONable.m; sourceTree = "<group>"; };
-    CE7B9FA71CE606610016C7EB /* RealmPrimitives.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RealmPrimitives.h; sourceTree = "<group>"; };
-		CE7B9FA81CE606610016C7EB /* RealmPrimitives.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RealmPrimitives.m; sourceTree = "<group>"; };
+		CEA622051CE111EA00CBA925 /* NSDate+{{ class_prefix }}ISO8601.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+{{ class_prefix }}ISO8601.h"; sourceTree = "<group>"; };
+		CEA622061CE111EA00CBA925 /* NSDate+{{ class_prefix }}ISO8601.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+{{ class_prefix }}ISO8601.m"; sourceTree = "<group>"; };
+		CE7764C71CE38094005B1BE7 /* {{ class_prefix }}Operation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ class_prefix }}Operation.h; path = Operations/{{ class_prefix }}Operation.h; sourceTree = "<group>"; };
+		CE7764C81CE38094005B1BE7 /* {{ class_prefix }}Operation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = {{ class_prefix }}Operation.m; path = Operations/{{ class_prefix }}Operation.m; sourceTree = "<group>"; };
+		CE7764C91CE38094005B1BE7 /* {{ class_prefix }}OperationBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ class_prefix }}OperationBuilder.h; path = Operations/{{ class_prefix }}OperationBuilder.h; sourceTree = "<group>"; };
+    CE7764F71CE4F4E0005B1BE7 /* {{ class_prefix }}JSONable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = {{ class_prefix }}JSONable.h; sourceTree = "<group>"; };
+    CEAA10851CE5301300515F44 /* {{ class_prefix }}JSONable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = {{ class_prefix }}JSONable.m; sourceTree = "<group>"; };
+    CE7B9FA71CE606610016C7EB /* {{ class_prefix }}RealmPrimitives.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = {{ class_prefix }}RealmPrimitives.h; sourceTree = "<group>"; };
+		CE7B9FA81CE606610016C7EB /* {{ class_prefix }}RealmPrimitives.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = {{ class_prefix }}RealmPrimitives.m; sourceTree = "<group>"; };
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
-    {% set file_name = (definition_name + '.h') %}
+    {% set file_name = (class_prefix + definition_name + '.h') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ file_name }}; path = Models/{{ file_name }}; sourceTree = "<group>"; };
-    {% set file_name = (definition_name + '.m') %}
+    {% set file_name = (class_prefix + definition_name + '.m') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = {{ file_name }}; path = Models/{{ file_name }}; sourceTree = "<group>"; };
     {% endfor %}
     {%- for operation_name, operation in operations.iteritems() -%}
-    {% set file_name = ((operation_name|pascal_case) + 'Operation.h') %}
+    {% set file_name = ((class_prefix + operation_name|pascal_case) + 'Operation.h') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ file_name }}; path = Operations/{{ file_name }}; sourceTree = "<group>"; };
-    {% set file_name = ((operation_name|pascal_case) + 'Operation.m') %}
+    {% set file_name = ((class_prefix + operation_name|pascal_case) + 'Operation.m') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = {{ file_name }}; path = Operations/{{ file_name }}; sourceTree = "<group>"; };
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
-    {% set file_name = ((operation_name|pascal_case) + 'OperationBuilder.h') %}
+    {% set file_name = ((class_prefix + operation_name|pascal_case) + 'OperationBuilder.h') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = {{ file_name }}; path = Operations/{{ file_name }}; sourceTree = "<group>"; };
-    {% set file_name = ((operation_name|pascal_case) + 'OperationBuilder.m') %}
+    {% set file_name = ((class_prefix + operation_name|pascal_case) + 'OperationBuilder.m') %}
 		{{ file_name|file_ref_id }} /* {{ file_name }} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = {{ file_name }}; path = Operations/{{ file_name }}; sourceTree = "<group>"; };
     {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */ = {isa = PBXBuildFile; fileRef = {{ file_name|file_ref_id }} /* {{ file_name }} */; };
     {% endfor %}
@@ -153,9 +153,9 @@
 			children = (
 				CE6BCEF41CD019B100B6ED29 /* DataModel.xcdatamodeld */,
         {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
-        {% set file_name = (definition_name + '.h') %}
+        {% set file_name = (class_prefix + definition_name + '.h') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
-        {% set file_name = (definition_name + '.m') %}
+        {% set file_name = (class_prefix + definition_name + '.m') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
         {% endfor %}
 			);
@@ -165,17 +165,17 @@
     CE77647D1CE37CA8005B1BE7 /* Operations */ = {
 			isa = PBXGroup;
 			children = (
-				CE7764C71CE38094005B1BE7 /* Operation.h */,
-				CE7764C81CE38094005B1BE7 /* Operation.m */,
-				CE7764C91CE38094005B1BE7 /* OperationBuilder.h */,
+				CE7764C71CE38094005B1BE7 /* {{ class_prefix }}Operation.h */,
+				CE7764C81CE38094005B1BE7 /* {{ class_prefix }}Operation.m */,
+				CE7764C91CE38094005B1BE7 /* {{ class_prefix }}OperationBuilder.h */,
         {%- for operation_name, operation in operations.iteritems() -%}
-        {% set file_name = ((operation_name|pascal_case) + 'Operation.h') %}
+        {% set file_name = ((class_prefix + operation_name|pascal_case) + 'Operation.h') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
-        {% set file_name = ((operation_name|pascal_case) + 'Operation.m') %}
+        {% set file_name = ((class_prefix + operation_name|pascal_case) + 'Operation.m') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
-        {% set file_name = ((operation_name|pascal_case) + 'OperationBuilder.h') %}
+        {% set file_name = ((class_prefix + operation_name|pascal_case) + 'OperationBuilder.h') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
-        {% set file_name = ((operation_name|pascal_case) + 'OperationBuilder.m') %}
+        {% set file_name = ((class_prefix + operation_name|pascal_case) + 'OperationBuilder.m') %}
     		{{ file_name|file_ref_id }} /* {{ file_name }} */,
         {% endfor %}
 			);
@@ -253,21 +253,21 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE6BCEF61CD019B100B6ED29 /* DataModel.xcdatamodeld in Sources */,
-				CEA622071CE111EA00CBA925 /* NSDate+ISO8601.m in Sources */,
-				CE6BCEF01CD019B100B6ED29 /* ViewController.m in Sources */,
+				CEA622071CE111EA00CBA925 /* NSDate+{{ class_prefix }}ISO8601.m in Sources */,
+				CE6BCEF01CD019B100B6ED29 /* {{ class_prefix }}ViewController.m in Sources */,
 				CE6BCEED1CD019B100B6ED29 /* AppDelegate.m in Sources */,
 				CE6BCEEA1CD019B100B6ED29 /* main.m in Sources */,
-				CE7764CA1CE38094005B1BE7 /* Operation.m in Sources */,
-				CEAA10861CE5301300515F44 /* JSONable.m in Sources */,
-				CE7B9FA91CE606610016C7EB /* RealmPrimitives.m in Sources */,
+				CE7764CA1CE38094005B1BE7 /* {{ class_prefix }}Operation.m in Sources */,
+				CEAA10861CE5301300515F44 /* {{ class_prefix }}JSONable.m in Sources */,
+				CE7B9FA91CE606610016C7EB /* {{ class_prefix }}RealmPrimitives.m in Sources */,
         {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' -%}
-        {% set file_name = (definition_name + '.m') %}
+        {% set file_name = (class_prefix + definition_name + '.m') %}
         {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */,
         {% endfor %}
         {%- for operation_name, operation in operations.iteritems() -%}
-        {%- set file_name = (operation_name|pascal_case) + 'Operation.m' -%}
+        {%- set file_name = (class_prefix + operation_name|pascal_case) + 'Operation.m' -%}
         {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */,
-        {%- set file_name = (operation_name|pascal_case) + 'OperationBuilder.m' -%}
+        {%- set file_name = (class_prefix + operation_name|pascal_case) + 'OperationBuilder.m' -%}
         {{ file_name|build_phase_file_id }} /* {{ file_name }} in Sources */,
         {% endfor %}
 			);

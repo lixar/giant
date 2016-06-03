@@ -1,18 +1,18 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/JSONable')|start_of_file -}}
-{{- ios.file_header('JSONable.h') }}
+{{ (vars.api_name + '/' + class_prefix + 'JSONable')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'JSONable.h') }}
 #import <Foundation/Foundation.h>
 
-@protocol JSONable <NSObject>
+@protocol {{ class_prefix }}JSONable <NSObject>
 
-- (id<JSONable>)toJSON;
-+ (instancetype)fromJSON:(id<JSONable>)json;
+- (id<{{ class_prefix }}JSONable>)toJSON;
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json;
 
 @end
 
-@interface NSDictionary (JSONable) <JSONable> @end
-@interface NSArray (JSONable) <JSONable> @end
-@interface NSDate (JSONable) <JSONable> @end
-@interface NSString (JSONable) <JSONable> @end
-@interface NSNumber (JSONable) <JSONable> @end
+@interface NSDictionary ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface NSArray ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface NSDate ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface NSString ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface NSNumber ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end

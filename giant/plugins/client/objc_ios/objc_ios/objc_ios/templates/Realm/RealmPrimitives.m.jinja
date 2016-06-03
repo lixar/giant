@@ -1,36 +1,36 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/RealmPrimitives')|start_of_file -}}
-{{- ios.file_header('RealmPrimitives.m') }}
+{{ (vars.api_name + '/' + class_prefix + 'RealmPrimitives')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'RealmPrimitives.m') }}
 
-#import "NSDate+ISO8601.h"
-#import "RealmPrimitives.h"
+#import "NSDate+{{ class_prefix }}ISO8601.h"
+#import "{{ class_prefix }}RealmPrimitives.h"
 
-@implementation RealmString @end
+@implementation {{ class_prefix }}RealmString @end
 
-@implementation RealmInteger @end
+@implementation {{ class_prefix }}RealmInteger @end
 
-@implementation RealmFloat @end
+@implementation {{ class_prefix }}RealmFloat @end
 
-@implementation RealmDouble @end
+@implementation {{ class_prefix }}RealmDouble @end
 
-@implementation RealmBool @end
+@implementation {{ class_prefix }}RealmBool @end
 
-@implementation RealmDate @end
+@implementation {{ class_prefix }}RealmDate @end
 
-@implementation RealmData @end
+@implementation {{ class_prefix }}RealmData @end
 
-@implementation RealmDate (JSONable)
+@implementation {{ class_prefix }}RealmDate ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
-    return self.value.iso8601;
+    return self.value.{{ class_prefix }}_iso8601;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmDate* object = [RealmDate new];
-    object.value = [NSDate dateWithISO8601String:(NSString*)json];
+    {{ class_prefix }}RealmDate* object = [self new];
+    object.value = [NSDate {{ class_prefix }}_dateWithISO8601String:(NSString*)json];
     return object;
 }
 
@@ -50,16 +50,16 @@
 
 @end
 
-@implementation RealmString (JSONable)
+@implementation {{ class_prefix }}RealmString ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.value;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmString* object = [RealmString new];
+    {{ class_prefix }}RealmString* object = [self new];
     object.value = (NSString*)json;
     return object;
 }
@@ -80,16 +80,16 @@
 
 @end
 
-@implementation RealmInteger (JSONable)
+@implementation {{ class_prefix }}RealmInteger ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.value;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmInteger* object = [RealmInteger new];
+    {{ class_prefix }}RealmInteger* object = [self new];
     object.value = (NSNumber*)json;
     return object;
 }
@@ -110,16 +110,16 @@
 
 @end
 
-@implementation RealmFloat (JSONable)
+@implementation {{ class_prefix }}RealmFloat ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.value;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmFloat* object = [RealmFloat new];
+    {{ class_prefix }}RealmFloat* object = [self new];
     object.value = (NSNumber*)json;
     return object;
 }
@@ -140,16 +140,16 @@
 
 @end
 
-@implementation RealmDouble (JSONable)
+@implementation {{ class_prefix }}RealmDouble ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.value;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmDouble* object = [self new];
+    {{ class_prefix }}RealmDouble* object = [self new];
     object.value = (NSNumber*)json;
     return object;
 }
@@ -170,16 +170,16 @@
 
 @end
 
-@implementation RealmBool (JSONable)
+@implementation {{ class_prefix }}RealmBool ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.value;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    RealmBool* object = [self new];
+    {{ class_prefix }}RealmBool* object = [self new];
     object.value = (NSNumber*)json;
     return object;
 }
@@ -200,20 +200,20 @@
 
 @end
 
-@implementation RLMArray (JSONable)
+@implementation RLMArray ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     NSMutableArray* jsoned = [NSMutableArray array];
     
-    for(id<JSONable> jsonable in self) {
+    for(id<{{ class_prefix }}JSONable> jsonable in self) {
         [jsoned addObject:[jsonable toJSON]];
     }
     
     return [jsoned copy];
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     [[NSException exceptionWithName:@"Cannot parse NSArray to RLMArray."
                             reason:@"Cannot create RLMArray directly."

@@ -1,66 +1,66 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/RealmPrimitives')|start_of_file -}}
+{{ (vars.api_name + '/' + class_prefix + 'RealmPrimitives')|start_of_file -}}
 {{- ios.file_header('RealmPrimitives.h') }}
 
 #import <Foundation/Foundation.h>
 #import <Realm/Realm.h>
-#import "JSONable.h"
+#import "{{ class_prefix }}JSONable.h"
 
-@interface RealmString : RLMObject
+@interface {{ class_prefix }}RealmString : RLMObject
 
 @property (nonatomic, copy) NSString* value;
 
 @end
 
-@interface RealmInteger : RLMObject
+@interface {{ class_prefix }}RealmInteger : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMInt>* value;
 
 @end
 
-@interface RealmDouble : RLMObject
+@interface {{ class_prefix }}RealmDouble : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMDouble>* value;
 
 @end
 
-@interface RealmFloat : RLMObject
+@interface {{ class_prefix }}RealmFloat : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMFloat>* value;
 
 @end
 
-@interface RealmBool : RLMObject
+@interface {{ class_prefix }}RealmBool : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMBool>* value;
 
 @end
 
-@interface RealmDate : RLMObject
+@interface {{ class_prefix }}RealmDate : RLMObject
 
 @property (nonatomic, strong) NSDate* value;
 
 @end
 
-@interface RealmData : RLMObject
+@interface {{ class_prefix }}RealmData : RLMObject
 
 @property (nonatomic, copy) NSData* value;
 
 @end
 
-@interface RealmString (JSONable) <JSONable> @end
-@interface RealmInteger (JSONable) <JSONable> @end
-@interface RealmFloat (JSONable) <JSONable> @end
-@interface RealmDouble (JSONable) <JSONable> @end
-@interface RealmBool (JSONable) <JSONable> @end
-@interface RealmDate (JSONable) <JSONable> @end
-@interface RLMArray (JSONable) <JSONable> @end
+@interface {{ class_prefix }}RealmString ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface {{ class_prefix }}RealmInteger ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface {{ class_prefix }}RealmFloat ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface {{ class_prefix }}RealmDouble ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface {{ class_prefix }}RealmBool ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface {{ class_prefix }}RealmDate ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
+@interface RLMArray ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable> @end
 
-RLM_ARRAY_TYPE(RealmString)
-RLM_ARRAY_TYPE(RealmInteger)
-RLM_ARRAY_TYPE(RealmFloat)
-RLM_ARRAY_TYPE(RealmDouble)
-RLM_ARRAY_TYPE(RealmBool)
-RLM_ARRAY_TYPE(RealmDate)
-RLM_ARRAY_TYPE(RealmData)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmString)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmInteger)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmFloat)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmDouble)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmBool)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmDate)
+RLM_ARRAY_TYPE({{ class_prefix }}RealmData)

@@ -1,6 +1,6 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/NSDate+ISO8601')|start_of_file -}}
+{{ (vars.api_name + '/NSDate+' + class_prefix + 'ISO8601')|start_of_file -}}
 //
 //  NSDate+ISO8601.h
 //  Project
@@ -11,9 +11,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface NSDate (ISO8601)
+@interface NSDate ({{ class_prefix }}ISO8601)
 
-@property (nonatomic, copy, readonly) NSString *iso8601;
-+ (NSDate*)dateWithISO8601String:(NSString*)iso8601;
+@property (nonatomic, copy, readonly) NSString *{{ class_prefix }}_iso8601;
++ (NSDate*){{ class_prefix }}_dateWithISO8601String:(NSString*)iso8601;
 
 @end

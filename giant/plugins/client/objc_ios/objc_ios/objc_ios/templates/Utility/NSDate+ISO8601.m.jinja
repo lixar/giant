@@ -1,6 +1,6 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/NSDate+ISO8601')|start_of_file -}}
+{{ (vars.api_name + '/NSDate+' + class_prefix + 'ISO8601')|start_of_file -}}
 //
 //  NSDate+ISO8601.m
 //  Project
@@ -9,11 +9,11 @@
 //
 //
 
-#import "NSDate+ISO8601.h"
+#import "NSDate+{{ class_prefix }}ISO8601.h"
 
-@implementation NSDate (ISO8601)
+@implementation NSDate ({{ class_prefix }}ISO8601)
 
-+ (NSDateFormatter*)iso8601Formatter
++ (NSDateFormatter*){{ class_prefix }}_iso8601Formatter
 {
     static NSDateFormatter *dateFormatter;
     static dispatch_once_t onceToken;
@@ -27,14 +27,14 @@
     return dateFormatter;
 }
 
-- (NSString*)iso8601
+- (NSString*){{ class_prefix }}_iso8601
 {
-    return [self.class.iso8601Formatter stringFromDate:self];
+    return [self.class.{{ class_prefix }}_iso8601Formatter stringFromDate:self];
 }
 
-+ (NSDate*)dateWithISO8601String:(NSString*)iso8601
++ (NSDate*){{ class_prefix }}_dateWithISO8601String:(NSString*)iso8601
 {
-    return [self.class.iso8601Formatter dateFromString:iso8601];
+    return [self.class.{{ class_prefix }}_iso8601Formatter dateFromString:iso8601];
 }
 
 @end

@@ -1,84 +1,84 @@
 {% import 'variables-ios.jinja' as ios with context %}
 {% import 'variables.jinja' as vars with context %}
-{{ (vars.api_name + '/JSONable')|start_of_file -}}
-{{- ios.file_header('JSONable.m') }}
+{{ (vars.api_name + '/' + class_prefix + 'JSONable')|start_of_file -}}
+{{- ios.file_header(class_prefix + 'JSONable.m') }}
 #import <Foundation/Foundation.h>
-#import "JSONable.h"
-#import "NSDate+ISO8601.h"
+#import "{{ class_prefix }}JSONable.h"
+#import "NSDate+{{ class_prefix }}ISO8601.h"
 
-@implementation NSDictionary (JSONable)
+@implementation NSDictionary ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON;
+- (id<{{ class_prefix }}JSONable>)toJSON;
 {
     NSMutableDictionary* jsoned = [NSMutableDictionary dictionary];
     for (NSString* key in self) {
-        id<JSONable> value = self[key];
+        id<{{ class_prefix }}JSONable> value = self[key];
         jsoned[key] = [value toJSON];
     }
     return [jsoned copy];
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [NSDictionary dictionaryWithDictionary:(NSDictionary*)json];
 }
 
 @end
 
-@implementation NSArray (JSONable)
+@implementation NSArray ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON;
+- (id<{{ class_prefix }}JSONable>)toJSON;
 {
     NSMutableArray* jsoned = [NSMutableArray array];
-    for (id<JSONable> value in self) {
+    for (id<{{ class_prefix }}JSONable> value in self) {
         [jsoned addObject:[value toJSON]];
     }
     return [jsoned copy];
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [NSArray arrayWithArray:(NSArray*)json];
 }
 
 @end
 
-@implementation NSDate (JSONable)
+@implementation NSDate ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
-    return self.iso8601;
+    return self.{{ class_prefix }}_iso8601;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    return [NSDate dateWithISO8601String:(NSString *)json];
+    return [NSDate {{ class_prefix }}_dateWithISO8601String:(NSString *)json];
 }
 
 @end
 
-@implementation NSString (JSONable)
+@implementation NSString ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [(NSString *)json copy];
 }
 
 @end
 
-@implementation NSNumber (JSONable)
+@implementation NSNumber ({{ class_prefix }}JSONable)
 
-- (id<JSONable>)toJSON
+- (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self;
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [(NSNumber *)json copy];
 }

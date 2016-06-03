@@ -163,32 +163,32 @@ def _ios_attribute_optional(definition, property_name):
         return False
     return property_name in definition['required']
     
-def _realm_property_type(prop):
+def _realm_property_type(prop, prefix):
     prop = _get_property(prop)
     if prop['type'] == 'object':
-        return prop['name'] + ' *'
+        return prefix + prop['name'] + ' *'
     value = _swagger_to_realm_map[prop['type']][prop.get('format')]
     if prop['type'] == 'array':
         if '$ref' in prop['items']:
-            return value.format(object_type=prop['items']['$ref'].split('/')[-1])
+            return value.format(object_type=prefix + prop['items']['$ref'].split('/')[-1])
         items_prop = _get_property(prop['items'])
         if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
             items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]
-            return value.format(object_type=items_type)
+            return value.format(object_type=prefix + items_type)
         else:
-            return value.format(object_type= _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
+            return value.format(object_type=prefix + _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
     return value
     
-def _property_type(prop):
+def _property_type(prop, prefix):
     if 'definition' in prop and 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
-        return _realm_property_type(prop)
+        return _realm_property_type(prop, prefix)
     prop = _get_property(prop)
     return _swagger_to_objc_map[prop['type']][prop.get('format')]
     
-def _parameter_type(param):
+def _parameter_type(param, prefix):
         param = _get_parameter(param)
         if param['in'] == 'body':
-            return _definition_type(param['schema'])
+            return _definition_type(param['schema'], prefix)
         return _swagger_to_objc_map[param['type']][param.get('format')]
     
 def _ios_datamodel_attribute_type(prop):
@@ -203,32 +203,32 @@ def _template_string_in_af_format(string_value):
     import re
     return re.subn('\{([^}]+)\}', ':\\1', string_value)[0]
     
-def _example_parameter(param):
+def _example_parameter(param, prefix):
     param = _get_parameter(param)
     if param['in'] == 'body':
-        return _example_definition(param['schema'])
+        return _example_definition(param['schema'], prefix)
     return _example_primitive(param)
     
-def _definition_type(schema):
+def _definition_type(schema, prefix):
     schema = _get_schema(schema)
     if 'type' not in schema or schema['type'] == 'object':
-        return '{} *'.format(schema['name'])
+        return '{}{} *'.format(prefix, schema['name'])
     elif schema['type'] == 'array':
-        return 'NSArray<{}> *'.format(_definition_type(schema['items']))
+        return 'NSArray<{}> *'.format(_definition_type(schema['items'], prefix))
     else:
-        return _property_type(schema)
+        return _property_type(schema, prefix)
         
-def _array_definition_items_type(schema):
+def _array_definition_items_type(schema, prefix):
     schema = _get_schema(schema)
     if 'definition' in schema and 'x-persist' in schema['definition']:
         try:
             items = _get_schema(schema['items'])
-            return _swagger_to_realm_wrapper_map[items['type']][items.get('format')]
+            return prefix + _swagger_to_realm_wrapper_map[items['type']][items.get('format')]
         except StandardError as e:
             pass
-    return _definition_type(schema['items'])
+    return _definition_type(schema['items'], prefix)
         
-def _example_definition(schema):
+def _example_definition(schema, prefix):
     schema = _get_schema(schema)
     if 'type' not in schema or schema['type'] == 'object':
         if 'name' not in schema:
@@ -237,22 +237,22 @@ def _example_definition(schema):
             for prop_name, prop in schema['properties'].iteritems():
                 prop_copy = dict(prop)
                 prop['name'] = prop_name
-                model_template = model_template + 'model[@"{prop_name}"] = {prop_example}; '.format(prop_name=prop_name, prop_example=_example_definition(prop))
+                model_template = model_template + 'model[@"{prop_name}"] = {prop_example}; '.format(prop_name=prop_name, prop_example=_example_definition(prop, prefix))
         else:
             try:
-                model_template = '^{{ {schema_name}* model = [{schema_name} new]; '.format(schema_name=schema['name'])
+                model_template = '^{{ {prefix}{schema_name}* model = [{prefix}{schema_name} new]; '.format(prefix=prefix, schema_name=schema['name'])
             except StandardError as e:
                 import pdb; pdb.set_trace()
                 print(e)
             for prop_name, prop in schema['properties'].iteritems():
                 prop_copy = dict(prop)
                 prop['name'] = prop_name
-                model_template = model_template + 'model.{prop_name} = {prop_example}; '.format(prop_name=_objc_varname(base_filters.camel_case(prop_name)), prop_example=_example_definition(prop))
+                model_template = model_template + 'model.{prop_name} = {prop_example}; '.format(prop_name=_objc_varname(base_filters.camel_case(prop_name)), prop_example=_example_definition(prop, prefix))
         model_template = model_template + 'return model; }()'
         return model_template
         # return '[{} new]'.format(schema['name'])
     elif schema['type'] == 'array':
-        return '@[{}]'.format(_example_definition(schema['items']))
+        return '@[{}]'.format(_example_definition(schema['items'], prefix))
     else:
         return _example_primitive(schema)
         
@@ -272,13 +272,13 @@ def _response_schema(operation):
             return _get_schema(response['schema'])
     return None
     
-def _response_type(operation):
+def _response_type(operation, prefix):
     schema = _response_schema(operation)
     if schema == None:
         return ''
-    return _definition_type(schema)
+    return _definition_type(schema, prefix)
             
-def _objc_method_signature(operation):
+def _objc_method_signature(operation, prefix):
     param_signature = '{param_name}:({param_type}){param_name_lower}'
     op_name = operation['operationId']
     parameters = []
@@ -295,7 +295,7 @@ def _objc_method_signature(operation):
                 param_name = param_name_lower
             parameters.append(param_signature.format(
                     param_name=param_name, 
-                    param_type=_parameter_type(param),
+                    param_type=_parameter_type(param, prefix),
                     param_name_lower=param_name_lower, 
                 )
             )
@@ -307,7 +307,7 @@ def _objc_method_signature(operation):
         response_type=_response_type(operation)
     )
     
-def _example_call(operation, success_block, failure_block):
+def _example_call(operation, success_block, failure_block, prefix):
     response_type = _response_type(operation)
     if response_type != '':
         response_type = response_type + ' response'
@@ -327,7 +327,7 @@ def _example_call(operation, success_block, failure_block):
                 param_name = param_name_lower
             parameters.append(param_signature.format(
                     param_name=param_name, 
-                    param_example=_example_parameter(param)
+                    param_example=_example_parameter(param, prefix)
                 )
             )
     else:
@@ -376,15 +376,15 @@ def _type_to_string(param, variable_name):
         schema = param
     return _examples.swagger_to_objc_string_map[schema['type']][schema.get('format')](schema, variable_name)
         
-def _objc_property(param):
+def _objc_property(param, prefix):
     param = _get_parameter(param)
     property_template = '@property (nonatomic, {param_access_semantics}) {param_type} {param_name};'
     if param['in'] == 'body':
         param_access_semantics = 'strong'
-        param_type = _definition_type(param['schema'])
+        param_type = _definition_type(param['schema'], prefix)
     else:
         param_access_semantics = _swagger_to_objc_access_semantics_map[param['type']][param.get('format')]
-        param_type = _parameter_type(param)
+        param_type = _parameter_type(param, prefix)
     param_name = base_filters.camel_case(param['name'])
     return property_template.format(
         param_access_semantics=param_access_semantics, 
@@ -397,34 +397,34 @@ def _model_base_type(definition):
     else:
         return 'NSObject'
         
-def _realm_property_import(prop):
+def _realm_property_import(prop, prefix):
     prop = _get_property(prop)
     if prop['type'] == 'array':
         prop = _get_property(prop['items'])
         if 'name' in prop:
-            return '#import "{}.h"'.format(prop['name'])
+            return '#import "{}{}.h"'.format(prefix, prop['name'])
     elif prop['type'] == 'object':
-        return '#import "{}.h"'.format(prop['name'])
+        return '#import "{}{}.h"'.format(prefix, prop['name'])
     return None
     
-def _response_type_forward_decl(operation):
+def _response_type_forward_decl(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
             schema = _get_schema(response['schema'])
             if 'type' not in schema or schema['type'] == 'object':
-                return '@class ' + schema['name'] + ';'
+                return '@class ' + prefix + schema['name'] + ';'
             elif schema['type'] == 'array' and '$ref' in schema['items']:
-                return '@class ' + schema['items']['$ref'].split('/')[-1] + ';'
+                return '@class ' + prefix + schema['items']['$ref'].split('/')[-1] + ';'
     return ''
     
-def _response_type_import(operation):
+def _response_type_import(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
             schema = _get_schema(response['schema'])
             if 'type' not in schema or schema['type'] == 'object':
-                return '#import "' + schema['name'] + '.h"'
+                return '#import "' + prefix + schema['name'] + '.h"'
             elif schema['type'] == 'array' and '$ref' in schema['items']:
-                return '#import "' + schema['items']['$ref'].split('/')[-1] + '.h"'
+                return '#import "' + prefix + schema['items']['$ref'].split('/')[-1] + '.h"'
     return ''
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),

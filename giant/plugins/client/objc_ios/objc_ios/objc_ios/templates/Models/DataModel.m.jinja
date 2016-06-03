@@ -1,27 +1,28 @@
 {% import 'variables.jinja' as vars with context %}
 {% import 'variables-ios.jinja' as ios with context %}
 {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}
-{% set filename = vars.api_name + '/Models/' + definition_name %}
+{%- set class_name = class_prefix+definition_name -%}
+{% set filename = vars.api_name + '/Models/' + class_name %}
 {{ filename|start_of_file -}}
-{{- ios.file_header(definition_name) }}
+{{- ios.file_header(class_name) }}
 
-#import "{{ definition_name }}.h"
+#import "{{ class_name }}.h"
 {%- if 'properties' in definition %}
 {%- for property_name, property in definition.properties.iteritems() %}
 {%- if property.type == 'array' and '$ref' in property['items'] %}
-#import "{{ (property|array_definition_items_type)[:-2] }}.h"
+#import "{{ (property|array_definition_items_type(class_prefix))[:-2] }}.h"
 {%- elif (property.type == 'object' or 'type' not in property) and 'properties' in property %}
 #import "{{ (property|property_type)[:-2] }}.h"
 {%- endif %}
 {%- endfor -%}
 {%- endif %}
 
-@implementation {{ definition_name }}
+@implementation {{ class_name }}
 {%- if 'properties' in definition %}
 {%- for property_name, property in definition.properties.iteritems() %}
 {%- if 'enum' in property and property.type == 'string' %}
 {% for enum in property.enum %}
-NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }} = @"{{ enum }}";
+NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }} = @"{{ enum }}";
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
@@ -38,22 +39,22 @@ NSString * const {{ definition_name }}{{ property_name|pascal_case }}{{ enum|pas
     };
 }
 
-+ (instancetype)fromJSON:(id<JSONable>)json
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    {{ definition_name }} *model = [self new];
+    {{ class_name }} *model = [self new];
     {%- if 'properties' in definition -%}
     {%- for property_name, property in definition.properties.iteritems() %}
     {%- if property.type == 'array' %}
     model.{{ property_name|camel_case|objc_varname }} = ^{
         NSArray* array = json[@"{{ property_name }}"];
         NSMutableArray* items = [NSMutableArray array];
-        for(id<JSONable> jsonable in array) {
-            [items addObject:[{{ (property|array_definition_items_type)[:-2] }} fromJSON:jsonable]];
+        for(id<{{ class_prefix }}JSONable> jsonable in array) {
+            [items addObject:[{{ (property|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
         }
         return [items copy];
     }();
     {%- else %}
-    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type)[:-2] }} fromJSON:json[@"{{ property_name }}"]];
+    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- endif %}
     {%- endfor -%}
     {%- endif %}
