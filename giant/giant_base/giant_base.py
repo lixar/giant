@@ -44,6 +44,8 @@ class GenerationTracker(object):
     def check_skip_write_file(self, file_path, real_file_path, generated_template_data):
         if (os.path.exists(file_path) and real_file_path in self._previous_generation_log
         and int(os.stat(file_path).st_mtime) != self._previous_generation_log.get(real_file_path)):
+            if self._previous_generation_log.get(real_file_path) == -1:
+                return True # Always skip
             if self._force_overwrite != None:
                 if not self._force_overwrite:
                     self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
@@ -76,12 +78,15 @@ class GenerationTracker(object):
         logging.warning('It appears you have edited the following file.\n{}\n'.format(real_file_path))
         overwrite = ''
         while overwrite.lower() not in ('y', 'n'):
-            while overwrite.lower() not in ('y', 'n', 'd'):
-                overwrite = raw_input('Do you wish to overwrite it. (y)es, (N)o, (d)iff? ')
+            while overwrite.lower() not in ('y', 'n', 'd', 'a'):
+                overwrite = raw_input('Do you wish to overwrite it. (y)es, (N)o, (a)lways No, (d)iff, ? ')
                 if overwrite == '':
                     overwrite = 'N'
             if overwrite.lower() == 'n':
                 self._file_generation_log[real_file_path] = self._previous_generation_log.get(real_file_path)
+                return True # Skip the file.
+            if overwrite.lower() == 'a':
+                self._file_generation_log[real_file_path] = -1
                 return True # Skip the file.
             if overwrite.lower() == 'd':
                 print(diff)
