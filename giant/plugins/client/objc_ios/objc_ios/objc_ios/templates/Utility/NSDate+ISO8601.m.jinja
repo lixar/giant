@@ -13,7 +13,7 @@
 
 @implementation NSDate ({{ class_prefix }}ISO8601)
 
-+ (NSDateFormatter*){{ class_prefix }}_iso8601Formatter
++ (NSDateFormatter*){{ class_prefix }}_iso8601FormatterNoMilliseconds
 {
     static NSDateFormatter *dateFormatter;
     static dispatch_once_t onceToken;
@@ -27,14 +27,28 @@
     return dateFormatter;
 }
 
++ (NSDateFormatter*){{ class_prefix }}_iso8601FormatterWithMilliseconds
+{
+    static NSDateFormatter *dateFormatter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+        NSLocale *enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        [dateFormatter setLocale:enUSPOSIXLocale];
+        [dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+        [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"];
+    });
+    return dateFormatter;
+}
+
 - (NSString*){{ class_prefix }}_iso8601
 {
-    return [self.class.{{ class_prefix }}_iso8601Formatter stringFromDate:self];
+    return [self.class.{{ class_prefix }}_iso8601FormatterWithMilliseconds stringFromDate:self];
 }
 
 + (NSDate*){{ class_prefix }}_dateWithISO8601String:(NSString*)iso8601
 {
-    return [self.class.{{ class_prefix }}_iso8601Formatter dateFromString:iso8601];
+    return [self.class.{{ class_prefix }}_iso8601FormatterWithMilliseconds dateFromString:iso8601] ?: [self.class.{{ class_prefix }}_iso8601FormatterNoMilliseconds dateFromString:iso8601];
 }
 
 @end
