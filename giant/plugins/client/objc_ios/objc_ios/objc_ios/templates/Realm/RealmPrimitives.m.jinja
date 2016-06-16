@@ -6,19 +6,68 @@
 #import "NSDate+{{ class_prefix }}ISO8601.h"
 #import "{{ class_prefix }}RealmPrimitives.h"
 
-@implementation {{ class_prefix }}RealmString @end
+@implementation {{ class_prefix }}RealmString 
 
-@implementation {{ class_prefix }}RealmInteger @end
++ (instancetype)stringWithString:(NSString*)string
+{
+    return [[self alloc] initWithValue:@{@"value": string}];
+}
 
-@implementation {{ class_prefix }}RealmFloat @end
+@end
 
-@implementation {{ class_prefix }}RealmDouble @end
+@implementation {{ class_prefix }}RealmInteger 
 
-@implementation {{ class_prefix }}RealmBool @end
++ (instancetype)integerWithInteger:(NSInteger)integer
+{
+    return [[self alloc] initWithValue:@{@"value": @(integer)}];
+}
 
-@implementation {{ class_prefix }}RealmDate @end
+@end
 
-@implementation {{ class_prefix }}RealmData @end
+@implementation {{ class_prefix }}RealmFloat
+
++ (instancetype)floatWithFloat:(float)number
+{
+    return [[self alloc] initWithValue:@{@"value": @(number)}];
+}
+
+@end
+
+@implementation {{ class_prefix }}RealmDouble
+
++ (instancetype)doubleWithDouble:(double)number
+{
+    return [[self alloc] initWithValue:@{@"value": @(number)}];
+}
+
+ @end
+
+@implementation {{ class_prefix }}RealmBool
+
++ (instancetype)boolWithBool:(BOOL)truthy
+{
+    return [[self alloc] initWithValue:@{@"value": @(truthy)}];
+}
+
+ @end
+
+@implementation {{ class_prefix }}RealmDate
+
++ (instancetype)dateWithDate:(NSDate*)date
+{
+    return [[self alloc] initWithValue:@{@"value": date}];
+}
+
+ @end
+
+@implementation {{ class_prefix }}RealmData
+
++ (instancetype)dataWithData:(NSData*)data;
+{
+    return [[self alloc] initWithValue:@{@"value": data}];
+}
+
+ @end
 
 @implementation {{ class_prefix }}RealmDate ({{ class_prefix }}JSONable)
 

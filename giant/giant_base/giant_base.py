@@ -45,6 +45,7 @@ class GenerationTracker(object):
         if (os.path.exists(file_path) and real_file_path in self._previous_generation_log
         and int(os.stat(file_path).st_mtime) != self._previous_generation_log.get(real_file_path)):
             if self._previous_generation_log.get(real_file_path) == -1:
+                self._file_generation_log[real_file_path] = -1
                 return True # Always skip
             if self._force_overwrite != None:
                 if not self._force_overwrite:

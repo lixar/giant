@@ -11,11 +11,15 @@
 
 @property (nonatomic, copy) NSString* value;
 
++ (instancetype)stringWithString:(NSString*)string;
+
 @end
 
 @interface {{ class_prefix }}RealmInteger : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMInt>* value;
+
++ (instancetype)integerWithInteger:(NSInteger)integer;
 
 @end
 
@@ -23,11 +27,15 @@
 
 @property (nonatomic, strong) NSNumber<RLMDouble>* value;
 
++ (instancetype)doubleWithDouble:(double)number;
+
 @end
 
 @interface {{ class_prefix }}RealmFloat : RLMObject
 
 @property (nonatomic, strong) NSNumber<RLMFloat>* value;
+
++ (instancetype)floatWithFloat:(float)number;
 
 @end
 
@@ -35,17 +43,23 @@
 
 @property (nonatomic, strong) NSNumber<RLMBool>* value;
 
++ (instancetype)boolWithBool:(BOOL)truthy;
+
 @end
 
 @interface {{ class_prefix }}RealmDate : RLMObject
 
 @property (nonatomic, strong) NSDate* value;
 
++ (instancetype)dateWithDate:(NSDate*)date;
+
 @end
 
 @interface {{ class_prefix }}RealmData : RLMObject
 
 @property (nonatomic, copy) NSData* value;
+
++ (instancetype)dataWithData:(NSData*)data;
 
 @end
 

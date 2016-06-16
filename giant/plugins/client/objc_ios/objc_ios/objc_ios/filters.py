@@ -32,7 +32,7 @@ _swagger_to_objc_map = {
         }
     ),
     'boolean': defaultdict(lambda: 'NSNumber *'),
-    'array': defaultdict(lambda: 'NSArray *'),
+    'array': defaultdict(lambda: 'NSArray<{object_type}*> *'),
     'object': defaultdict(lambda: 'NSDictionary *'),
 }
 
@@ -179,25 +179,38 @@ def _realm_property_type(prop, prefix):
             return value.format(object_type=prefix + _swagger_to_objc_map[prop['items']['type']][prop['items'].get('format')])
     return value
     
+def _property_array_items_type(items, prefix):
+    if '$ref' in items:
+        return prefix + items['$ref'].split('/')[-1]
+    items_prop = _get_property(items)
+    if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
+        items_type = _property_type(items_prop, prefix)
+        return items_type[:-2]
+    else:
+        return prefix + _swagger_to_objc_map[items['type']][items.get('format')]
+    
 def _property_type(prop, prefix):
     if 'definition' in prop and 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
         return _realm_property_type(prop, prefix)
+    if '$ref' in prop and prop['$ref'] == '#/definitions/SurveyAnswer':
+        import pdb; pdb.set_trace()
     prop = _get_property(prop)
-    return _swagger_to_objc_map[prop['type']][prop.get('format')]
+    value = _swagger_to_objc_map[prop['type']][prop.get('format')]
+    if prop['type'] == 'array':
+        items_type = _property_array_items_type(prop['items'], prefix)
+        return value.format(object_type=items_type)
+    return value
     
 def _parameter_type(param, prefix):
         param = _get_parameter(param)
         if param['in'] == 'body':
             return _definition_type(param['schema'], prefix)
-        return _swagger_to_objc_map[param['type']][param.get('format')]
+        return _property_type(param, prefix)
+        #return _swagger_to_objc_map[param['type']][param.get('format')]
     
 def _ios_datamodel_attribute_type(prop):
-    try:
-        prop = _get_property(prop)
-        return _swagger_to_xcdatamodel_map[prop['type']][prop.get('format')]
-    except StandardError as e:
-        import pdb; pdb.set_trace()
-        print(e)
+    prop = _get_property(prop)
+    return _swagger_to_xcdatamodel_map[prop['type']][prop.get('format')]
     
 def _template_string_in_af_format(string_value):
     import re
@@ -239,11 +252,7 @@ def _example_definition(schema, prefix):
                 prop['name'] = prop_name
                 model_template = model_template + 'model[@"{prop_name}"] = {prop_example}; '.format(prop_name=prop_name, prop_example=_example_definition(prop, prefix))
         else:
-            try:
-                model_template = '^{{ {prefix}{schema_name}* model = [{prefix}{schema_name} new]; '.format(prefix=prefix, schema_name=schema['name'])
-            except StandardError as e:
-                import pdb; pdb.set_trace()
-                print(e)
+            model_template = '^{{ {prefix}{schema_name}* model = [{prefix}{schema_name} new]; '.format(prefix=prefix, schema_name=schema['name'])
             for prop_name, prop in schema['properties'].iteritems():
                 prop_copy = dict(prop)
                 prop['name'] = prop_name
@@ -448,7 +457,8 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('response_type_forward_decl', _response_type_forward_decl),
     ('response_type_import', _response_type_import),
     ('response_schema', _response_schema),
-    ('array_definition_items_type', _array_definition_items_type)
+    ('array_definition_items_type', _array_definition_items_type),
+    ('property_array_items_type', _property_array_items_type)
 )
     
     

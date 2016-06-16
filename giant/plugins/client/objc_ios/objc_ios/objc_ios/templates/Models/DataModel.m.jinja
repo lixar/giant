@@ -61,10 +61,26 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
     return model;
 }
 {% if 'x-primary-key' in definition %}
+{% if definition['x-primary-key'] is string %}
 + (NSString *)primaryKey
 {
     return @"{{ definition['x-primary-key']|camel_case|objc_varname }}";
 }
+{% else %}
+- (NSString*)compositeKey
+{
+    NSString* key = @"";
+    {% for key in definition['x-primary-key'] %}
+    key = [key stringByAppendingString:[self {{ key|camel_case|objc_varname }}]];
+    {% endfor %}
+    return key;
+}
+
++ (NSString *)primaryKey
+{
+    return @"compositeKey";
+}
+{% endif %}
 {% endif %}
 @end
 {%- endfor %}

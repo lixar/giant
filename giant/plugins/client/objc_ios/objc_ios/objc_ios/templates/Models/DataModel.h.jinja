@@ -15,6 +15,12 @@
 {{ prop_import }}
 {%- endif -%}
 {%- endfor -%}
+{%- elif 'properties' in definition -%}
+{%- for property_name, property in definition.properties.iteritems() %}
+{%- if property.type == 'array' and '$ref' in property['items'] %}
+#import "{{ property['items']|property_array_items_type(class_prefix) }}.h"
+{%- endif %}
+{%- endfor %}
 {%- endif %}
 {%- if 'properties' in definition -%}
 {%- for property_name, property in definition.properties.iteritems() %}
