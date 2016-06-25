@@ -17,6 +17,17 @@
 {%- endfor -%}
 {%- endif %}
 
+{% if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}
+@interface {{ class_name }} ()
+
+@property (nonatomic, strong) NSString* compositeKey;
+{%- for key in definition['x-primary-key'] %}
+@property (nonatomic, strong) NSString* {{ key|camel_case|objc_varname }}Value;
+{%- endfor %}
+
+@end
+{% endif %}
+
 @implementation {{ class_name }}
 {%- if 'properties' in definition %}
 {%- for property_name, property in definition.properties.iteritems() %}
@@ -67,13 +78,55 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
     return @"{{ definition['x-primary-key']|camel_case|objc_varname }}";
 }
 {% else %}
-- (NSString*)compositeKey
+- (instancetype)initWithValue:(id)value
 {
-    NSString* key = @"";
+    NSMutableDictionary* valueCopy = [value mutableCopy];
     {% for key in definition['x-primary-key'] %}
-    key = [key stringByAppendingString:[self {{ key|camel_case|objc_varname }}]];
-    {% endfor %}
-    return key;
+    if(valueCopy[@"{{ key|camel_case|objc_varname }}"] != nil) {
+        valueCopy[@"{{ key|camel_case|objc_varname }}Value"] = valueCopy[@"{{ key|camel_case|objc_varname }}"];
+    }
+    {%- endfor %}
+    
+    self = [super initWithValue:[valueCopy copy]];
+    if(self != nil) {
+        [self updatePrimaryKey];
+    }
+    return self;
+}
+{%- for key in definition['x-primary-key'] %}
+
+- (void)set{{ key|pascal_case|objc_varname }}:(NSString*)value
+{
+    self.{{ key|camel_case|objc_varname }}Value = value;
+    [self updatePrimaryKey];
+}
+
+- (NSString*){{ key|camel_case|objc_varname }}
+{
+    return self.{{ key|camel_case|objc_varname }}Value;
+}
+{%- endfor %}
+
++ (NSArray<NSString*>*)ignoredProperties
+{
+    return @[
+    {%- for key in definition['x-primary-key'] %}
+        @"{{ key|camel_case|objc_varname }}",
+    {%- endfor %}
+    ];
+}
+
+- (void)updatePrimaryKey
+{
+    NSMutableString* key = [NSMutableString string];
+    {%- for key in definition['x-primary-key'] %}
+        {%- if not loop.first %}
+    [key appendFormat:@" <><><> %@", self.{{ key|camel_case|objc_varname }}];
+        {%- else %}
+    [key appendString:self.{{ key|camel_case|objc_varname }}];
+        {%- endif %}
+    {%- endfor %}
+    self.compositeKey = [key copy];
 }
 
 + (NSString *)primaryKey
