@@ -116,6 +116,49 @@
     return client;
 }
 
++ (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSMutableSet* certificates = [NSMutableSet set];
+    for(NSString* name in names) {
+        NSString* path = [bundle pathForResource:name ofType:@"cer"];
+        [certificates addObject:[NSData dataWithContentsOfFile:path]];
+    }
+    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:[certificates copy]];
+}
+
++ (void)pinCertificatesNamed:(NSArray<NSString*>*)names
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSMutableSet* certificates = [NSMutableSet set];
+    for(NSString* name in names) {
+        NSString* path = [bundle pathForResource:name ofType:@"cer"];
+        [certificates addObject:[NSData dataWithContentsOfFile:path]];
+    }
+    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:[certificates copy]];
+}
+
++ (void)pinPublicKeyForCertificateNamed:(NSString*)name
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString* path = [bundle pathForResource:name ofType:@"cer"];
+    NSSet *certificate = [NSSet setWithObject:[NSData dataWithContentsOfFile:path]];
+    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:certificate];
+}
+
++ (void)pinCertificateNamed:(NSString*)name
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString* path = [bundle pathForResource:name ofType:@"cer"];
+    NSSet *certificate = [NSSet setWithObject:[NSData dataWithContentsOfFile:path]];
+    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:certificate];
+}
+
++ (void)allowInvalidCertificates
+{
+    self.httpSessionManager.securityPolicy.allowInvalidCertificates = YES;
+}
+
 + (AFHTTPRequestSerializer*)jsonSerializer
 {
     

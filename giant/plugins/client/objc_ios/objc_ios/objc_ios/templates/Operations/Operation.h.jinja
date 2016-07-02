@@ -27,6 +27,12 @@
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName;
 + (void)setHeaderValue:(NSString*)value forHeader:(NSString*)header;
 
++ (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names;
++ (void)pinCertificatesNamed:(NSArray<NSString*>*)names;
++ (void)pinPublicKeyForCertificateNamed:(NSString*)name;
++ (void)pinCertificateNamed:(NSString*)name;
++ (void)allowInvalidCertificates __attribute__((deprecated("Not actually deprecated, but DO NOT USE THIS SETTING IN PRODUCTION!")));
+
 - (void)setupDataTask;
 
 @property (nonatomic, strong) NSError* error;
