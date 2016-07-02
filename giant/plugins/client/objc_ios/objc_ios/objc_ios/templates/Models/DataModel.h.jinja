@@ -41,7 +41,6 @@ extern NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|p
 {% if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}
 @property (nonatomic, readonly) NSString* compositeKey;
 {%- endif %}
-
 - (NSDictionary*)toJSON;
 
 @end

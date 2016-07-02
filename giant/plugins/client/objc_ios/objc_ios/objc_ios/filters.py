@@ -286,6 +286,22 @@ def _response_type(operation, prefix):
     if schema == None:
         return ''
     return _definition_type(schema, prefix)
+    
+def _error_response_schema(operation):
+    if 'responses' not in operation:
+        return None
+    if 'default' in operation['responses'].keys():
+        return _get_schema(operation['responses']['default']['schema'])
+    for response_code, response in operation['responses'].iteritems():
+        if response_code < 200 or response_code >= 300 and 'schema' in response:
+            return _get_schema(response['schema'])
+    return None
+    
+def _error_response_type(operation, prefix):
+    schema = _error_response_schema(operation)
+    if schema == None:
+        return ''
+    return _definition_type(schema, prefix)
             
 def _objc_method_signature(operation, prefix):
     param_signature = '{param_name}:({param_type}){param_name_lower}'
@@ -426,6 +442,21 @@ def _response_type_forward_decl(operation, prefix):
                 return '@class ' + prefix + schema['items']['$ref'].split('/')[-1] + ';'
     return ''
     
+def _error_response_type_forward_decl(operation, prefix):
+    error_response = None
+    if 'default' in operation['responses']:
+        error_response = operation['responses']['default']
+    for response_code, response in operation['responses'].iteritems():
+        if response_code < 200 or response_code >= 300 and 'schema' in response:
+            error_response = response
+    if error_response != None:
+        schema = _get_schema(error_response['schema'])
+        if 'type' not in schema or schema['type'] == 'object':
+            return '@class ' + prefix + schema['name'] + ';'
+        elif schema['type'] == 'array' and '$ref' in schema['items']:
+            return '@class ' + prefix + schema['items']['$ref'].split('/')[-1] + ';'
+    return ''
+    
 def _response_type_import(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
@@ -435,6 +466,23 @@ def _response_type_import(operation, prefix):
             elif schema['type'] == 'array' and '$ref' in schema['items']:
                 return '#import "' + prefix + schema['items']['$ref'].split('/')[-1] + '.h"'
     return ''
+    
+def _error_response_type_import(operation, prefix):
+    error_response = None
+    if 'default' in operation['responses']:
+        error_response = operation['responses']['default']
+    for response_code, response in operation['responses'].iteritems():
+        if response_code < 200 or response_code >= 300 and 'schema' in response:
+            error_response = response
+    if error_response != None:
+        schema = _get_schema(error_response['schema'])
+        if 'type' not in schema or schema['type'] == 'object':
+            return '#import "' + prefix + schema['name'] + '.h"'
+        elif schema['type'] == 'array' and '$ref' in schema['items']:
+            return '#import "' + prefix + schema['items']['$ref'].split('/')[-1] + '.h"'
+    else:
+        return ''
+    
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
@@ -458,7 +506,11 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('response_type_import', _response_type_import),
     ('response_schema', _response_schema),
     ('array_definition_items_type', _array_definition_items_type),
-    ('property_array_items_type', _property_array_items_type)
+    ('property_array_items_type', _property_array_items_type),
+    ('error_response_schema', _error_response_schema),
+    ('error_response_type', _error_response_type),
+    ('error_response_type_import', _error_response_type_import),
+    ('error_response_type_forward_decl', _error_response_type_forward_decl)
 )
     
     

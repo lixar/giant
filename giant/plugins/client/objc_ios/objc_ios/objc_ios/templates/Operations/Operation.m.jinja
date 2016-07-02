@@ -72,6 +72,10 @@
         [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     }
     
+    for(NSString* key in *self.class.defaultHeaders) {
+        [request setValue:(*self.class.defaultHeaders)[key] forHTTPHeaderField:key];
+    }
+    
     if(self.headers != nil) {
         for(NSString* key in self.headers) {
             [request setValue:self.headers[key] forHTTPHeaderField:key];
@@ -92,7 +96,12 @@
          NSLog(@"Error: %@", error);
          weakSelf.error = error;
          weakSelf.response = response;
-         weakSelf.responseObject = responseObject; // This will parse if needed.
+         if(error != nil) {
+             weakSelf.errorResponseObject = responseObject; // This will parse if needed.
+         }
+         else {
+             weakSelf.responseObject = responseObject; // This will parse if needed.
+         }
          [weakSelf completeOperation];
      }];
 }
@@ -102,7 +111,7 @@
     static AFHTTPSessionManager* client = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"http://localhost:10010"]];
+        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"{{ swagger.schemes[0] }}://{{ swagger.host }}"]];
     });
     return client;
 }
@@ -144,6 +153,21 @@
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName
 {
     self.apiKeys[securityName] = token;
+}
+
++ (void)setHeaderValue:(NSString*)value forHeader:(NSString*)header
+{
+    (*self.defaultHeaders)[header] = value;
+}
+
++ (NSMutableDictionary* __strong *)defaultHeaders
+{
+    static NSMutableDictionary* dict = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dict = [NSMutableDictionary dictionary];
+    });
+    return &dict;
 }
 
 + (instancetype)operationWithBuilderBlock:(void(^)(id<{{ class_prefix }}OperationBuilder> *builder))builderBlock
@@ -270,6 +294,10 @@
 {%- if response_import != '' %}
 {{ response_import }}
 {%- endif %}
+{%- set error_response_import = operation|error_response_type_import(class_prefix) -%}
+{%- if error_response_import != '' %}
+{{ error_response_import }}
+{%- endif %}
 
 @interface {{ class_name }} ()
 
@@ -293,6 +321,24 @@
     [super setResponseObject:[objects copy]];
     {% else %}
     [super setResponseObject:[{{ (operation|response_type(class_prefix))[:-2] }} fromJSON:responseObject]];
+    {%- endif %}
+}
+{%- endif %}
+
+{%- if (operation|error_response_type(class_prefix)) != '' %}
+
+@dynamic errorResponseObject;
+
+- (void)setErrorResponseObject:(id)errorResponseObject
+{
+    {%- if (operation|error_response_schema).type == 'array' %}
+    NSMutableArray* objects = [NSMutableArray array];
+    for(id<{{ class_prefix }}JSONable> jsonable in errorResponseObject) {
+        [objects addObject:[{{ (operation|error_response_schema|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
+    }
+    [super setErrorResponseObject:[objects copy]];
+    {% else %}
+    [super setErrorResponseObject:[{{ (operation|error_response_type(class_prefix))[:-2] }} fromJSON:errorResponseObject]];
     {%- endif %}
 }
 {%- endif %}

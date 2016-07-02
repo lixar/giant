@@ -17,7 +17,7 @@
 {%- endfor -%}
 {%- endif %}
 
-{% if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}
+{%- if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}
 @interface {{ class_name }} ()
 
 @property (nonatomic, strong) NSString* compositeKey;
@@ -26,7 +26,7 @@
 {%- endfor %}
 
 @end
-{% endif %}
+{%- endif %}
 
 @implementation {{ class_name }}
 {%- if 'properties' in definition %}
@@ -41,13 +41,15 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 
 - (NSDictionary*)toJSON
 {
-    return @{
-      {%- if 'properties' in definition -%}
-      {%- for property_name, property in definition.properties.iteritems() %}
-      @"{{ property_name }}": [self.{{ property_name|camel_case|objc_varname }} toJSON],
-      {%- endfor -%}
-      {%- endif %}
-    };
+    NSMutableDictionary* json = [NSMutableDictionary dictionary];
+    {%- if 'properties' in definition -%}
+    {%- for property_name, property in definition.properties.iteritems() %}
+    if(self.{{ property_name|camel_case|objc_varname }} != nil) {
+        json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSON];
+    }
+    {%- endfor -%}
+    {%- endif %}
+    return [json copy];
 }
 
 + (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
@@ -123,7 +125,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
         {%- if not loop.first %}
     [key appendFormat:@" <><><> %@", self.{{ key|camel_case|objc_varname }}];
         {%- else %}
-    [key appendString:self.{{ key|camel_case|objc_varname }}];
+    [key appendString:self.{{ key|camel_case|objc_varname }} ?: @""];
         {%- endif %}
     {%- endfor %}
     self.compositeKey = [key copy];
