@@ -135,6 +135,20 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 {
     return @"compositeKey";
 }
+
++ (RLMResults *)objectsWhere:(NSString *)predicateFormat args:(va_list)args {
+    {% for key in definition['x-primary-key'] %}
+    predicateFormat = [predicateFormat stringByReplacingOccurrencesOfString:@"{{ key|camel_case|objc_varname }}" withString:@"{{ key|camel_case|objc_varname }}Value"];
+    {%- endfor %}
+    return [self objectsWithPredicate:[NSPredicate predicateWithFormat:predicateFormat arguments:args]];
+}
+
++ (RLMResults *)objectsInRealm:(RLMRealm *)realm where:(NSString *)predicateFormat args:(va_list)args {
+    {% for key in definition['x-primary-key'] %}
+    predicateFormat = [predicateFormat stringByReplacingOccurrencesOfString:@"{{ key|camel_case|objc_varname }}" withString:@"{{ key|camel_case|objc_varname }}Value"];
+    {%- endfor %}
+    return [self objectsInRealm:realm withPredicate:[NSPredicate predicateWithFormat:predicateFormat arguments:args]];
+}
 {% endif %}
 {% endif %}
 @end

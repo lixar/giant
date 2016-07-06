@@ -22,6 +22,14 @@
 {%- endif %}
 {%- endfor %}
 {%- endif %}
+{%- if 'x-relations' in definition %}
+{%- for relation_name, relation in definition['x-relations'].iteritems() %}
+{%- set prop_import = relation|realm_property_import(class_prefix) -%}
+{%- if prop_import is not none %}
+{{ prop_import }}
+{%- endif -%}
+{%- endfor %}
+{%- endif %}
 {%- if 'properties' in definition -%}
 {%- for property_name, property in definition.properties.iteritems() %}
 {%- if 'enum' in property and property.type == 'string' %}
@@ -36,6 +44,11 @@ extern NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|p
 {% if 'properties' in definition %}
 {%- for property_name, property in definition.properties.iteritems() %}
 @property (nonatomic, strong) {{ property|property_type(class_prefix) }} {{ property_name|camel_case|objc_varname }};
+{%- endfor %}
+{%- endif %}
+{% if 'x-relations' in definition %}
+{%- for relation_name, relation in definition['x-relations'].iteritems() %}
+@property (nonatomic, strong) {{ relation|property_type(class_prefix, true) }} {{ relation_name|camel_case|objc_varname }};
 {%- endfor %}
 {%- endif %}
 {% if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}

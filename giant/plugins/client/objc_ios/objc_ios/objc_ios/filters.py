@@ -189,11 +189,9 @@ def _property_array_items_type(items, prefix):
     else:
         return prefix + _swagger_to_objc_map[items['type']][items.get('format')]
     
-def _property_type(prop, prefix):
-    if 'definition' in prop and 'x-persist' in prop['definition'] and prop['definition']['x-persist']:
+def _property_type(prop, prefix, do_persist=False):
+    if do_persist or ('definition' in prop and 'x-persist' in prop['definition'] and prop['definition']['x-persist']):
         return _realm_property_type(prop, prefix)
-    if '$ref' in prop and prop['$ref'] == '#/definitions/SurveyAnswer':
-        import pdb; pdb.set_trace()
     prop = _get_property(prop)
     value = _swagger_to_objc_map[prop['type']][prop.get('format')]
     if prop['type'] == 'array':
@@ -202,11 +200,10 @@ def _property_type(prop, prefix):
     return value
     
 def _parameter_type(param, prefix):
-        param = _get_parameter(param)
-        if param['in'] == 'body':
-            return _definition_type(param['schema'], prefix)
-        return _property_type(param, prefix)
-        #return _swagger_to_objc_map[param['type']][param.get('format')]
+    param = _get_parameter(param)
+    if param['in'] == 'body':
+        return _definition_type(param['schema'], prefix)
+    return _property_type(param, prefix)
     
 def _ios_datamodel_attribute_type(prop):
     prop = _get_property(prop)
