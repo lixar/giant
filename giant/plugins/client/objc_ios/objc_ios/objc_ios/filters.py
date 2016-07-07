@@ -429,6 +429,16 @@ def _realm_property_import(prop, prefix):
         return '#import "{}{}.h"'.format(prefix, prop['name'])
     return None
     
+def _realm_property_forward_decl(prop, prefix):
+    prop = _get_property(prop)
+    if prop['type'] == 'array':
+        prop = _get_property(prop['items'])
+        if 'name' in prop:
+            return '@class {}{};'.format(prefix, prop['name'])
+    elif prop['type'] == 'object':
+        return '@class {}{};'.format(prefix, prop['name'])
+    return None
+    
 def _response_type_forward_decl(operation, prefix):
     for response_code, response in operation['responses'].iteritems():
         if response_code >= 200 and response_code < 300 and 'schema' in response:
@@ -499,6 +509,7 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('example_parameter', _example_parameter),
     ('model_base_type', _model_base_type),
     ('realm_property_import', _realm_property_import),
+    ('realm_property_forward_decl', _realm_property_forward_decl),
     ('response_type_forward_decl', _response_type_forward_decl),
     ('response_type_import', _response_type_import),
     ('response_schema', _response_schema),
