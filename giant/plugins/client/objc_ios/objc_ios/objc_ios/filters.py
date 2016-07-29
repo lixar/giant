@@ -146,16 +146,22 @@ _swagger_to_objc_access_semantics_map = {
 def _get_property(prop):
     if '$ref' in prop:
         return swagger['definitions'][prop['$ref'].split('/')[-1]]
+    if 'x-ref' in prop:
+        return swagger['definitions'][prop['x-ref'].split('/')[-1]]
     return prop
     
 def _get_parameter(param):
     if '$ref' in param:
         return swagger['parameters'][param['$ref'].split('/')[-1]]
+    if 'x-ref' in param:
+        return swagger['parameters'][param['x-ref'].split('/')[-1]]
     return param
     
 def _get_schema(schema):
     if '$ref' in schema:
         return swagger['definitions'][schema['$ref'].split('/')[-1]]
+    if 'x-ref' in schema:
+        return swagger['definitions'][schema['x-ref'].split('/')[-1]]
     return schema
     
 def _ios_attribute_optional(definition, property_name):

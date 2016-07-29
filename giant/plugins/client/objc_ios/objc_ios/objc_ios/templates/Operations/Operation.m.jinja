@@ -44,7 +44,7 @@
         parameters = self.parameters;
     }
     
-    AFHTTPSessionManager* sessionManager = self.class.httpSessionManager;
+    AFHTTPSessionManager* sessionManager = *self.class.httpSessionManager;
     NSString* URLString = [NSURL URLWithString:self.URLString relativeToURL:sessionManager.baseURL].absoluteString;
     
     NSError *error;
@@ -106,14 +106,19 @@
      }];
 }
 
-+ (AFHTTPSessionManager*)httpSessionManager
++ (void)setURLRoot:(NSString*)host
+{
+    *self.httpSessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
+}
+
++ (AFHTTPSessionManager * __strong *)httpSessionManager
 {
     static AFHTTPSessionManager* client = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"{{ swagger.schemes[0] }}://{{ swagger.host }}"]];
+        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://localhost:10010"]];
     });
-    return client;
+    return &client;
 }
 
 + (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names
@@ -124,7 +129,7 @@
         NSString* path = [bundle pathForResource:name ofType:@"cer"];
         [certificates addObject:[NSData dataWithContentsOfFile:path]];
     }
-    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:[certificates copy]];
+    (*self.httpSessionManager).securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:[certificates copy]];
 }
 
 + (void)pinCertificatesNamed:(NSArray<NSString*>*)names
@@ -135,7 +140,7 @@
         NSString* path = [bundle pathForResource:name ofType:@"cer"];
         [certificates addObject:[NSData dataWithContentsOfFile:path]];
     }
-    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:[certificates copy]];
+    (*self.httpSessionManager).securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:[certificates copy]];
 }
 
 + (void)pinPublicKeyForCertificateNamed:(NSString*)name
@@ -143,7 +148,7 @@
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
     NSString* path = [bundle pathForResource:name ofType:@"cer"];
     NSSet *certificate = [NSSet setWithObject:[NSData dataWithContentsOfFile:path]];
-    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:certificate];
+    (*self.httpSessionManager).securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:certificate];
 }
 
 + (void)pinCertificateNamed:(NSString*)name
@@ -151,12 +156,12 @@
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
     NSString* path = [bundle pathForResource:name ofType:@"cer"];
     NSSet *certificate = [NSSet setWithObject:[NSData dataWithContentsOfFile:path]];
-    self.httpSessionManager.securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:certificate];
+    (*self.httpSessionManager).securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:certificate];
 }
 
 + (void)allowInvalidCertificates
 {
-    self.httpSessionManager.securityPolicy.allowInvalidCertificates = YES;
+    (*self.httpSessionManager).securityPolicy.allowInvalidCertificates = YES;
 }
 
 + (AFHTTPRequestSerializer*)jsonSerializer

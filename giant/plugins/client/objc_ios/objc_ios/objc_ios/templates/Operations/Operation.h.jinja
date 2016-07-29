@@ -24,6 +24,7 @@
 
 @interface {{ class_prefix }}Operation: NSOperation <{{ class_prefix }}OperationProtocol>
 
++ (void)setURLRoot:(NSString*)host;
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName;
 + (void)setHeaderValue:(NSString*)value forHeader:(NSString*)header;
 
