@@ -286,6 +286,7 @@
 
 - (NSSet<NSString*>*)produces
 {
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
     return nil;
 }
 
@@ -455,6 +456,17 @@
     {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname -%}
     URLString = [URLString stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string(varname) }}];
     {%- endfor %}
+    {%- set query_params = operation|parameters_in('query') %}
+    {%- if query_params|length > 0 %}
+    NSMutableString* queryParameters = [NSMutableString stringWithString:@"?"];
+    {%- for param in query_params %}
+    if(self.builder.{{ param.name|camel_case }} != nil) {
+        [queryParameters appendFormat:@"{{ param.name }}=%@", self.builder.{{ param.name|camel_case }}];
+    }
+    {%- endfor %}
+    URLString = [URLString stringByAppendingString:queryParameters];
+    {%- endif %}
+    
     return URLString;
 }
 
@@ -494,6 +506,7 @@
 }
 
 {%- if 'produces' in operation %}
+
 - (NSSet<NSString*>*)produces
 {
     return [NSSet setWithArray:@[
