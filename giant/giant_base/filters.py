@@ -57,6 +57,8 @@ def parameters_in(operation, in_types):
     if 'parameters' not in operation:
         return []
     for param in operation['parameters']:
+        if 'x-giant-ignore' in param:
+            continue
         param = get_parameter(param)
         if param['in'] == in_types or param['in'] in in_types:
             results.append(param)

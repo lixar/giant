@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         {%- set response_type = operation|android_response_type -%}
         {%- set service_name = controller_name|camel_case + 'Service' -%}
         {%- set param_list = [] %}
-        {%- for param in operation.parameters %}
+        {%- for param in operation.parameters if 'x-giant-ignore' not in param %}
         final {{ param|android_param_type }} {{ param.name|camel_case }} = {{ param|android_example_value }};
         {%- do param_list.append(param.name|camel_case) -%}
         {%- endfor %}

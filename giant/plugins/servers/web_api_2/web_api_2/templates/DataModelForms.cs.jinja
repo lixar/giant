@@ -11,7 +11,7 @@ namespace {{ vars.api_name }}.Models
 {
     public class {{ class_name }}
     {
-        {% for parameter in operation.parameters %}
+        {% for parameter in operation.parameters if 'x-giant-ignore' not in param %}
         public {{ parameter|parameter_type }} {{ parameter['name']|camel_to_pascal }} { get; set; }
         {% endfor %}
     }

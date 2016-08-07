@@ -177,6 +177,8 @@ def _realm_property_type(prop, prefix):
     if prop['type'] == 'array':
         if '$ref' in prop['items']:
             return value.format(object_type=prefix + prop['items']['$ref'].split('/')[-1])
+        if 'x-ref' in prop['items']:
+            return value.format(object_type=prefix + prop['items']['x-ref'].split('/')[-1])
         items_prop = _get_property(prop['items'])
         if 'type' not in items_prop or (items_prop['type'] != 'object' and items_prop['type'] != 'array'):
             items_type = _swagger_to_realm_wrapper_map[items_prop['type']][items_prop.get('format')][:-2]

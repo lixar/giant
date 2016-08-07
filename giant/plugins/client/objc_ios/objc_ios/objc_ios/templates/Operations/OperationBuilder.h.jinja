@@ -32,7 +32,7 @@
 
 - ({{ class_name[:-7] }} *)build;
 
-{% for param in operation.parameters -%}
+{% for param in operation.parameters if 'x-giant-ignore' not in param -%}
 {{ param|objc_property(class_prefix) }}
 {% endfor %}
 @end
