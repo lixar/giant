@@ -9,7 +9,7 @@
 
 @interface {{ class_prefix }}Operation ()
 
-@property (atomic, strong) NSURLSessionDataTask *task;
+@property (atomic, strong) NSURLSessionTask *task;
 @property (nonatomic, getter = isFinished, readwrite)  BOOL finished;
 @property (nonatomic, getter = isExecuting, readwrite) BOOL executing;
 
@@ -45,7 +45,10 @@
     }
     
     AFHTTPSessionManager* sessionManager;
-    if(self.produces != nil && [self.produces containsObject:@"text/html"]) {
+    if(self.isFileDownload) {
+        sessionManager = [*self.class.jsonSessionManager copy];
+    }
+    else if(self.produces != nil && [self.produces containsObject:@"text/html"]) {
         sessionManager = *self.class.httpSessionManager;
     }
     else {
@@ -95,27 +98,51 @@
         [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
     }
     
-    self.task = [sessionManager
+    void(^completion)(NSURLResponse * _Nonnull, id  _Nullable, NSError * _Nullable) = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        NSLog(@"Response: %@", response);
+        NSLog(@"ResponseObject: %@", responseObject);
+        NSLog(@"Error: %@", error);
+        weakSelf.error = error;
+        weakSelf.response = response;
+        if(error != nil) {
+            weakSelf.errorResponseObject = responseObject; // This will parse if needed.
+        }
+        else {
+            if([responseObject isKindOfClass:NSData.class]) {
+                weakSelf.responseObject = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
+            }
+            else {
+                weakSelf.responseObject = responseObject; // This will parse if needed.
+            }
+        }
+        [weakSelf completeOperation];
+    };
+    
+    if(self.isFileDownload) {
+        [sessionManager setDataTaskDidReceiveResponseBlock:^NSURLSessionResponseDisposition(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSURLResponse * _Nonnull response) {
+            NSUInteger statusCode = ((NSHTTPURLResponse*)response).statusCode;
+            if(statusCode >= 200 && statusCode < 300) {
+                return NSURLSessionResponseBecomeDownload;
+            }
+            else {
+                return NSURLSessionResponseAllow;
+            }
+        }];
+        __weak typeof(self) weakSelf = self;
+        __weak typeof(sessionManager) weakSessionManager = sessionManager;
+        [sessionManager setDataTaskDidBecomeDownloadTaskBlock:^(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSURLSessionDownloadTask * _Nonnull downloadTask) {
+            weakSelf.task = downloadTask;
+            [weakSessionManager setDownloadTaskDidFinishDownloadingBlock:^NSURL * _Nullable(NSURLSession * _Nonnull session, NSURLSessionDownloadTask * _Nonnull downloadTask, NSURL * _Nonnull location) {
+                NSURL* filePath = [self filepath];
+                return filePath;
+            }];
+        }];
+    }
+    
+    self.task =
+    [sessionManager
      dataTaskWithRequest:request
-     completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-         NSLog(@"Response: %@", response);
-         NSLog(@"ResponseObject: %@", responseObject);
-         NSLog(@"Error: %@", error);
-         weakSelf.error = error;
-         weakSelf.response = response;
-         if(error != nil) {
-             weakSelf.errorResponseObject = responseObject; // This will parse if needed.
-         }
-         else {
-             if([responseObject isKindOfClass:NSData.class]) {
-                 weakSelf.responseObject = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
-             }
-             else {
-                 weakSelf.responseObject = responseObject; // This will parse if needed.
-             }
-         }
-         [weakSelf completeOperation];
-     }];
+     completionHandler:completion];
 }
 
 + (void)setURLRoot:(NSString*)host
@@ -296,6 +323,18 @@
     return nil;
 }
 
+- (BOOL)isFileDownload
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
+- (NSURL*)filepath
+{
+    [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
+    return nil;
+}
+
 - (NSString*)securityDefinition
 {
     [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
@@ -373,6 +412,7 @@
 
 #import "{{ class_name }}.h"
 #import "{{ class_name }}Builder.h"
+#import "AECPJSONable.h"
 #import <AFNetworking/AFNetworking.h>
 {%- set response_import = operation|response_type_import(class_prefix) -%}
 {%- if response_import != '' %}
@@ -458,13 +498,22 @@
     {%- endfor %}
     {%- set query_params = operation|parameters_in('query') %}
     {%- if query_params|length > 0 %}
-    NSMutableString* queryParameters = [NSMutableString stringWithString:@"?"];
+    NSMutableArray* queryParameters = [NSMutableArray array];
     {%- for param in query_params %}
     if(self.builder.{{ param.name|camel_case }} != nil) {
-        [queryParameters appendFormat:@"{{ param.name }}=%@", self.builder.{{ param.name|camel_case }}];
+        {%- if param.type == 'array' %}
+        [queryParameters addObject:[NSString stringWithFormat:@"{{ param.name }}=%@", [self.builder.{{ param.name|camel_case }} componentsJoinedByString:@","]]];
+        {%- else %}
+        [queryParameters addObject:[NSString stringWithFormat:@"{{ param.name }}=%@", self.builder.{{ param.name|camel_case }}]];
+        {%- endif %}
     }
     {%- endfor %}
-    URLString = [URLString stringByAppendingString:queryParameters];
+    if(queryParameters.count > 0) {
+        NSMutableCharacterSet* characterSet = NSCharacterSet.URLQueryAllowedCharacterSet.mutableCopy;
+        [characterSet removeCharactersInString:@"+"];
+        NSString* encodedParameters = [[queryParameters componentsJoinedByString:@"&"] stringByAddingPercentEncodingWithAllowedCharacters:characterSet];
+        URLString = [NSString stringWithFormat:@"%@?%@", URLString, encodedParameters];
+    }
     {%- endif %}
     
     return URLString;
@@ -523,6 +572,24 @@
     return YES;
     {%- else -%}
     return NO;
+    {%- endif %}
+}
+
+- (BOOL)isFileDownload
+{
+    {% if (operation|response_schema).type == 'file' -%}
+    return YES;
+    {%- else -%}
+    return NO;
+    {%- endif %}
+}
+
+- (NSURL*)filepath
+{
+    {% if (operation|response_schema).type == 'file' -%}
+    return self.builder.filepath;
+    {%- else -%}
+    return nil;
     {%- endif %}
 }
 

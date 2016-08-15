@@ -31,9 +31,11 @@
 @interface {{ class_name }}: NSObject <{{ class_prefix }}OperationBuilder>
 
 - ({{ class_name[:-7] }} *)build;
-
-{% for param in operation.parameters if 'x-giant-ignore' not in param -%}
+{% for param in operation.parameters if 'x-giant-ignore' not in param %}
 {{ param|objc_property(class_prefix) }}
-{% endfor %}
+{% endfor -%}
+{%- if (operation|response_schema).type == 'file' %}
+@property (nonatomic, copy) NSURL* filepath;
+{% endif %}
 @end
 {%- endfor -%}

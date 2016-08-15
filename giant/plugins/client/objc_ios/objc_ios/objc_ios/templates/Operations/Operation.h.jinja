@@ -16,6 +16,8 @@
 @property (nonatomic, strong, readonly) id parameters;
 @property (nonatomic, assign, readonly) BOOL consumesJSON;
 @property (nonatomic, assign, readonly) BOOL isMultipart;
+@property (nonatomic, assign, readonly) BOOL isFileDownload;
+@property (nonatomic, copy, readonly) NSURL* filepath;
 @property (nonatomic, copy, readonly) NSString* securityDefinition;
 @property (nonatomic, copy, readonly) NSSet<NSString*>* produces;
 

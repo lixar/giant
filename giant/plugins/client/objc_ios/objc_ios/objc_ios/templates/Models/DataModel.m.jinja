@@ -65,18 +65,20 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
     {{ class_name }} *model = [self new];
     {%- if 'properties' in definition -%}
     {%- for property_name, property in definition.properties.iteritems() %}
+    if(json[@"{{ property_name }}"] != nil && ![json[@"{{ property_name }}"] isEqual:NSNull.null]) {
     {%- if property.type == 'array' %}
-    model.{{ property_name|camel_case|objc_varname }} = ^{
-        NSArray* array = json[@"{{ property_name }}"];
-        NSMutableArray* items = [NSMutableArray array];
-        for(id<{{ class_prefix }}JSONable> jsonable in array) {
-            [items addObject:[{{ (property|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
-        }
-        return [items copy];
-    }();
+        model.{{ property_name|camel_case|objc_varname }} = ^{
+            NSArray* array = json[@"{{ property_name }}"];
+            NSMutableArray* items = [NSMutableArray array];
+            for(id<{{ class_prefix }}JSONable> jsonable in array) {
+                [items addObject:[{{ (property|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
+            }
+            return [items copy];
+        }();
     {%- else %}
-    model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
+        model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- endif %}
+    }
     {%- endfor -%}
     {%- endif %}
     return model;

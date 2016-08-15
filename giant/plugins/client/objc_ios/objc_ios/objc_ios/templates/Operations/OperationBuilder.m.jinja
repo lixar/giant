@@ -22,11 +22,14 @@
 - (id)copyWithZone:(nullable NSZone *)zone
 {
   {{ class_name }}* copy = [[self class] new];
-  {% if operation.parameters is not undefined %}
+  {%- if operation.parameters is not undefined %}
   {% for param in operation.parameters if 'x-giant-ignore' not in param -%}
   copy.{{ (param|get_parameter).name|camel_case }} = self.{{ (param|get_parameter).name|camel_case }};
   {% endfor %}
   {%- endif %}
+  {%- if (operation|response_schema).type == 'file' %}
+  copy.filepath = self.filepath;
+  {% endif %}
   return copy;
 }
 

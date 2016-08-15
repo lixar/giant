@@ -34,6 +34,7 @@ _swagger_to_objc_map = {
     'boolean': defaultdict(lambda: 'NSNumber *'),
     'array': defaultdict(lambda: 'NSArray<{object_type}*> *'),
     'object': defaultdict(lambda: 'NSDictionary *'),
+    'file': defaultdict(lambda: 'NSURL *'), # URL of the local file path
 }
 
 _swagger_to_realm_map = {
