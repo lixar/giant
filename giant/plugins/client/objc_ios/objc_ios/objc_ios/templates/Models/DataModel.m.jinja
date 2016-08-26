@@ -53,7 +53,11 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
     {%- if 'properties' in definition -%}
     {%- for property_name, property in definition.properties.iteritems() %}
     if(self.{{ property_name|camel_case|objc_varname }} != nil) {
+      {%- if property.type == 'string' and property.format == 'date' %}
+        json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSONWithFormat:@"yyyy-MM-dd"];
+      {%- else %}
         json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSON];
+      {%- endif %}
     }
     {%- endfor -%}
     {%- endif %}

@@ -105,7 +105,13 @@
         weakSelf.error = error;
         weakSelf.response = response;
         if(error != nil) {
-            weakSelf.errorResponseObject = responseObject; // This will parse if needed.
+            if([responseObject isKindOfClass:NSData.class]) {
+                NSDictionary* dictionary = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
+                weakSelf.errorResponseObject = dictionary;
+            }
+            else {
+                weakSelf.errorResponseObject = responseObject; // This will parse if needed.
+            }
         }
         else {
             if([responseObject isKindOfClass:NSData.class]) {
@@ -133,7 +139,7 @@
         [sessionManager setDataTaskDidBecomeDownloadTaskBlock:^(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSURLSessionDownloadTask * _Nonnull downloadTask) {
             weakSelf.task = downloadTask;
             [weakSessionManager setDownloadTaskDidFinishDownloadingBlock:^NSURL * _Nullable(NSURLSession * _Nonnull session, NSURLSessionDownloadTask * _Nonnull downloadTask, NSURL * _Nonnull location) {
-                NSURL* filePath = [self filepath];
+                NSURL* filePath = [weakSelf filepath];
                 return filePath;
             }];
         }];

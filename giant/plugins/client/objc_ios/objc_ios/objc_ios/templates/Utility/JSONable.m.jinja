@@ -50,6 +50,13 @@
     return self.{{ class_prefix }}_iso8601;
 }
 
+- (id<{{ class_prefix }}JSONable>)toJSONWithFormat:(NSString*)format
+{
+    NSDateFormatter* dateFormatter = [NSDateFormatter new];
+    dateFormatter.dateFormat = format;
+    return [dateFormatter stringFromDate:self];
+}
+
 + (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [NSDate {{ class_prefix }}_dateWithISO8601String:(NSString *)json];

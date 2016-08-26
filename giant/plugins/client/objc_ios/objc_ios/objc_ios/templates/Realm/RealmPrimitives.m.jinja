@@ -94,7 +94,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmDate*)object value]];
 }
 
 @end
@@ -124,7 +124,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmString*)object value]];
 }
 
 @end
@@ -154,7 +154,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmInteger*)object value]];
 }
 
 @end
@@ -184,7 +184,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmFloat*)object value]];
 }
 
 @end
@@ -214,7 +214,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmDouble*)object value]];
 }
 
 @end
@@ -244,7 +244,7 @@
     if(![object isMemberOfClass:self.class]) {
         return NO;
     }
-    return [self.value isEqual:[object value]];
+    return [self.value isEqual:[({{ class_prefix }}RealmBool*)object value]];
 }
 
 @end
