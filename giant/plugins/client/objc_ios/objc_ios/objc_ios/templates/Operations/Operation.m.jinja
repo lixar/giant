@@ -7,6 +7,22 @@
 #import <AFNetworking/AFNetworking.h>
 #import "{{ class_prefix }}JSONable.h"
 
+#ifndef {{ class_prefix }}LogDebug
+#define {{ class_prefix }}LogDebug(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
+#endif
+
+#ifndef {{ class_prefix }}LogInfo
+#define {{ class_prefix }}LogInfo(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
+#endif
+
+#ifndef {{ class_prefix }}LogWarn
+#define {{ class_prefix }}LogWarn(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
+#endif
+
+#ifndef {{ class_prefix }}LogError
+#define {{ class_prefix }}LogError(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
+#endif
+
 @interface {{ class_prefix }}Operation ()
 
 @property (atomic, strong) NSURLSessionTask *task;
@@ -99,14 +115,14 @@
     }
     
     void(^completion)(NSURLResponse * _Nonnull, id  _Nullable, NSError * _Nullable) = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-        NSLog(@"Response: %@", response);
-        NSLog(@"ResponseObject: %@", responseObject);
-        NSLog(@"Error: %@", error);
+        {{ class_prefix }}LogDebug(@"Response: %@", response);
         weakSelf.error = error;
         weakSelf.response = response;
         if(error != nil) {
+            {{ class_prefix }}LogError(@"Request failed. %@", error);
             if([responseObject isKindOfClass:NSData.class]) {
                 NSDictionary* dictionary = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
+                {{ class_prefix }}LogError(@"Response Error: %@", dictionary);
                 weakSelf.errorResponseObject = dictionary;
             }
             else {
@@ -114,10 +130,14 @@
             }
         }
         else {
+            {{ class_prefix }}LogInfo(@"Request succeeded.");
             if([responseObject isKindOfClass:NSData.class]) {
-                weakSelf.responseObject = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
+                NSString* responseString = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
+                weakSelf.responseObject = responseString;
+                {{ class_prefix }}LogDebug(@"Response: %@", responseString);
             }
             else {
+                {{ class_prefix }}LogDebug(@"Response: %@", responseObject);
                 weakSelf.responseObject = responseObject; // This will parse if needed.
             }
         }
@@ -128,6 +148,7 @@
         [sessionManager setDataTaskDidReceiveResponseBlock:^NSURLSessionResponseDisposition(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSURLResponse * _Nonnull response) {
             NSUInteger statusCode = ((NSHTTPURLResponse*)response).statusCode;
             if(statusCode >= 200 && statusCode < 300) {
+                {{ class_prefix }}LogDebug(@"Converting data operation to download operation.");
                 return NSURLSessionResponseBecomeDownload;
             }
             else {
@@ -139,6 +160,7 @@
         [sessionManager setDataTaskDidBecomeDownloadTaskBlock:^(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSURLSessionDownloadTask * _Nonnull downloadTask) {
             weakSelf.task = downloadTask;
             [weakSessionManager setDownloadTaskDidFinishDownloadingBlock:^NSURL * _Nullable(NSURLSession * _Nonnull session, NSURLSessionDownloadTask * _Nonnull downloadTask, NSURL * _Nonnull location) {
+                {{ class_prefix }}LogDebug(@"File finished downloading.");
                 NSURL* filePath = [weakSelf filepath];
                 return filePath;
             }];
@@ -228,8 +250,7 @@
 }
 
 + (AFHTTPRequestSerializer*)jsonSerializer
-{
-    
+{    
     static AFJSONRequestSerializer* serializer = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -241,7 +262,6 @@
 
 + (AFHTTPRequestSerializer*)httpSerializer
 {
-    
     static AFHTTPRequestSerializer* serializer = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -347,7 +367,8 @@
     return nil;
 }
 
-- (void)start {
+- (void)start 
+{
     if ([self isCancelled]) {
         self.finished = YES;
         return;
@@ -356,16 +377,25 @@
     [self main];
 }
 
-- (void)main {
+- (void)main 
+{
+    {{ class_prefix }}LogInfo(@"Starting REST Operation");
+    {{ class_prefix }}LogDebug(@"%@", self.task.currentRequest);
+    {{ class_prefix }}LogDebug(@"%@", self.task.currentRequest.allHTTPHeaderFields);
+    if(self.task.currentRequest.HTTPBody != nil) {
+        {{ class_prefix }}LogDebug(@"%@", [NSString stringWithCString:self.task.currentRequest.HTTPBody.bytes encoding:NSUTF8StringEncoding]);
+    }
     [self.task resume];
 }
 
-- (void)cancel {
+- (void)cancel
+ {
     [self.task cancel];
     [super cancel];
 }
              
-- (void)completeOperation {
+- (void)completeOperation 
+{
     self.task = nil;
     self.executing = NO;
     self.finished  = YES;
@@ -373,23 +403,27 @@
 
 #pragma mark - NSOperation methods
 
-- (BOOL)isAsynchronous {
+- (BOOL)isAsynchronous
+{
     return YES;
 }
 
-- (BOOL)isExecuting {
+- (BOOL)isExecuting 
+{
     @synchronized(self) {
         return _executing;
     }
 }
 
-- (BOOL)isFinished {
+- (BOOL)isFinished 
+{
     @synchronized(self) {
         return _finished;
     }
 }
 
-- (void)setExecuting:(BOOL)executing {
+- (void)setExecuting:(BOOL)executing 
+{
     if (_executing != executing) {
         [self willChangeValueForKey:@"isExecuting"];
         @synchronized(self) {
@@ -399,7 +433,8 @@
     }
 }
 
-- (void)setFinished:(BOOL)finished {
+- (void)setFinished:(BOOL)finished 
+{
     [self willChangeValueForKey:@"isFinished"];
     @synchronized(self) {
         if (_finished != finished) {
@@ -601,7 +636,7 @@
 
 - (NSString*)securityDefinition
 {
-    {% if operation.security|length > 0 -%}
+    {%- if operation.security|length > 0 %}
     return @"{{ operation.security[0].keys()[0] }}";
     {%- else -%}
     return nil;
