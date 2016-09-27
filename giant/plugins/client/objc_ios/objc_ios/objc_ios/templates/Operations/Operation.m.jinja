@@ -126,8 +126,10 @@
                 weakSelf.errorResponseObject = dictionary;
             }
             else {
+                {{ class_prefix }}LogError(@"Error Response: %@", responseObject);
                 weakSelf.errorResponseObject = responseObject; // This will parse if needed.
             }
+            [NSNotificationCenter.defaultCenter postNotificationName:@"NetworkRequestFailed" object:weakSelf];
         }
         else {
             {{ class_prefix }}LogInfo(@"Request succeeded.");
