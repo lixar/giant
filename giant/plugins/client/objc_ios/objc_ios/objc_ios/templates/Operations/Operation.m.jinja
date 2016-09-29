@@ -461,10 +461,9 @@
 {%- if response_import != '' %}
 {{ response_import }}
 {%- endif %}
-{%- set error_response_import = operation|error_response_type_import(class_prefix) -%}
-{%- if error_response_import != '' %}
-{{ error_response_import }}
-{%- endif %}
+{%- for error_response_type in operation|error_response_types(class_prefix) %}
+#import "{{ error_response_type[:-2] }}.h"
+{%- endfor %}
 
 @interface {{ class_name }} ()
 
@@ -492,11 +491,14 @@
 }
 {%- endif %}
 
-{%- if (operation|error_response_type(class_prefix)) != '' %}
+{%- for error_response_type in operation|error_response_types(class_prefix) %}
 
-@dynamic errorResponseObject;
+- ({{ error_response_type }}){{ (error_response_type + 'Object')[class_prefix|length:]|camel_case }}
+{
+    return [super errorResponseObject];
+}
 
-- (void)setErrorResponseObject:(id)errorResponseObject
+- (void)set{{ (error_response_type + 'Object')[class_prefix|length:]|pascal_case }}:(id)errorResponseObject
 {
     {%- if (operation|error_response_schema).type == 'array' %}
     NSMutableArray* objects = [NSMutableArray array];
@@ -505,10 +507,10 @@
     }
     [super setErrorResponseObject:[objects copy]];
     {% else %}
-    [super setErrorResponseObject:[{{ (operation|error_response_type(class_prefix))[:-2] }} fromJSON:errorResponseObject]];
+    [super setErrorResponseObject:[{{ error_response_type[:-2] }} fromJSON:errorResponseObject]];
     {%- endif %}
 }
-{%- endif %}
+{%- endfor %}
 
 + (instancetype)operationWithBuilderBlock:(void(^)({{ class_name }}Builder *builder))builderBlock
 {

@@ -303,6 +303,17 @@ def _error_response_schema(operation):
             return _get_schema(response['schema'])
     return None
     
+def _error_response_types(operation, prefix):
+    if 'responses' not in operation:
+        return None
+    types = set()
+    if 'default' in operation['responses'].keys():
+        types.add(_definition_type(_get_schema(operation['responses']['default']['schema']), prefix))
+    for response_code, response in operation['responses'].iteritems():
+        if response_code < 200 or response_code >= 300 and 'schema' in response:
+            types.add(_definition_type(_get_schema(response['schema']), prefix))
+    return types
+    
 def _error_response_type(operation, prefix):
     schema = _error_response_schema(operation)
     if schema == None:
@@ -525,6 +536,7 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('array_definition_items_type', _array_definition_items_type),
     ('property_array_items_type', _property_array_items_type),
     ('error_response_schema', _error_response_schema),
+    ('error_response_types', _error_response_types),
     ('error_response_type', _error_response_type),
     ('error_response_type_import', _error_response_type_import),
     ('error_response_type_forward_decl', _error_response_type_forward_decl)

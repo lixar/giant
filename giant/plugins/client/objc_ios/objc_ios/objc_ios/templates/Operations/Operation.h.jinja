@@ -59,12 +59,10 @@
 
 {{ forward_decl }}
 {%- endif %}
-{%- set error_forward_decl = operation|error_response_type_forward_decl(class_prefix) %}
+{%- for error_response_type in operation|error_response_types(class_prefix) %}
+@class {{ error_response_type[:-2] }};
 
-{%- if error_forward_decl != '' %}
-
-{{ error_forward_decl }}
-{%- endif %}
+{%- endfor %}
 
 @interface {{ class_name }}: {{ class_prefix }}Operation <{{ class_prefix }}OperationProtocol>
 
@@ -74,11 +72,10 @@
 
 {% if (operation|response_type(class_prefix)) != '' -%}
 @property (nonatomic, strong) {{ operation|response_type(class_prefix) }} responseObject;
-
 {% endif -%}
-{% if (operation|error_response_type(class_prefix)) != '' -%}
-@property (nonatomic, strong) {{ operation|error_response_type(class_prefix) }} errorResponseObject;
+{%- for error_response_type in operation|error_response_types(class_prefix) %}
+@property (nonatomic, strong) {{ error_response_type }} {{ (error_response_type + 'Object')[class_prefix|length:]|camel_case }};
+{%- endfor %}
 
-{% endif -%}
 @end
 {% endfor %}
