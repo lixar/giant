@@ -28,8 +28,12 @@
 @interface {{ class_prefix }}Operation: NSOperation <{{ class_prefix }}OperationProtocol>
 
 + (void)setURLRoot:(NSString*)host;
++ (void)setURLBasePath:(NSString*)basePath;
++ (NSString*)urlBasePath;
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName;
 + (void)setHeaderValue:(NSString*)value forHeader:(NSString*)header;
+
++ (void)setClientCertificateNamed:(NSString*)name withPasswordBlock:(NSString*(^)())passwordBlock;
 
 + (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names;
 + (void)pinCertificatesNamed:(NSArray<NSString*>*)names;

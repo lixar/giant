@@ -65,10 +65,10 @@
         sessionManager = [*self.class.jsonSessionManager copy];
     }
     else if(self.produces != nil && [self.produces containsObject:@"text/html"]) {
-        sessionManager = *self.class.httpSessionManager;
+        sessionManager = [*self.class.httpSessionManager copy];
     }
     else {
-        sessionManager = *self.class.jsonSessionManager;
+        sessionManager = [*self.class.jsonSessionManager copy];
     }
 
     NSString* URLString = [NSURL URLWithString:self.URLString relativeToURL:sessionManager.baseURL].absoluteString;
@@ -114,6 +114,60 @@
         [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
     }
     
+    __weak AFURLSessionManager* weakSessionManager = sessionManager;
+    [sessionManager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession * _Nonnull session, NSURLAuthenticationChallenge * _Nonnull challenge, NSURLCredential *__autoreleasing  _Nullable * _Nullable credential) {
+        
+        __strong AFURLSessionManager* strongSessionManager = weakSessionManager;
+        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            if ([strongSessionManager.securityPolicy evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+                *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+                if (credential) {
+                    return NSURLSessionAuthChallengeUseCredential;
+                }
+                else {
+                    return NSURLSessionAuthChallengePerformDefaultHandling;
+                }
+            }
+            else {
+                return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+            }
+        }
+        else if (challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodClientCertificate) {
+            if({{ class_prefix }}Operation.clientCertificateData == nil) {
+                return NSURLSessionAuthChallengePerformDefaultHandling;
+            }
+            NSData *p12Data = *{{ class_prefix }}Operation.clientCertificateData;
+            NSString* passwordString = (*{{ class_prefix }}Operation.clientCertificatePasswordBlock)();
+            CFStringRef password = (__bridge CFStringRef)passwordString;
+            const void *keys[] = { kSecImportExportPassphrase };
+            const void *values[] = { password };
+            CFDictionaryRef optionsDictionary = CFDictionaryCreate(NULL, keys, values, 1, NULL, NULL);
+            CFArrayRef p12Items;
+            
+            OSStatus result = SecPKCS12Import((__bridge CFDataRef)p12Data, optionsDictionary, &p12Items);
+            if(result != noErr) {
+                return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+            }
+            
+            CFDictionaryRef identityDict = CFArrayGetValueAtIndex(p12Items, 0);
+            SecIdentityRef identityApp =(SecIdentityRef)CFDictionaryGetValue(identityDict,kSecImportItemIdentity);
+            
+            SecCertificateRef certRef;
+            SecIdentityCopyCertificate(identityApp, &certRef);
+            
+            SecCertificateRef certArray[1] = { certRef };
+            CFArrayRef myCerts = CFArrayCreate(NULL, (void *)certArray, 1, NULL);
+            CFRelease(certRef);
+            
+            *credential = [NSURLCredential credentialWithIdentity:identityApp certificates:(__bridge NSArray *)myCerts persistence:NSURLCredentialPersistencePermanent];
+            CFRelease(myCerts);
+            return NSURLSessionAuthChallengeUseCredential;
+        }
+        else {
+            return NSURLSessionAuthChallengePerformDefaultHandling;
+        }
+    }];
+    
     void(^completion)(NSURLResponse * _Nonnull, id  _Nullable, NSError * _Nullable) = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         {{ class_prefix }}LogDebug(@"Response: %@", response);
         weakSelf.error = error;
@@ -135,6 +189,9 @@
             {{ class_prefix }}LogInfo(@"Request succeeded.");
             if([responseObject isKindOfClass:NSData.class]) {
                 NSString* responseString = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
+                if(responseString == nil) {
+                    responseString = [NSString stringWithCString:[((NSData*)responseObject) bytes] encoding:NSISOLatin1StringEncoding];
+                }
                 weakSelf.responseObject = responseString;
                 {{ class_prefix }}LogDebug(@"Response: %@", responseString);
             }
@@ -182,6 +239,22 @@
     *self.jsonSessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
 }
 
++ (NSString* __strong *)_urlBasePath
+{
+    static NSString* basePath = @"{{ swagger.basePath|remove_trailing_slash }}";
+    return &basePath;
+}
+
++ (void)setURLBasePath:(NSString*)basePath
+{
+    *self._urlBasePath = basePath;
+}
+
++ (NSString*)urlBasePath
+{
+    return *self._urlBasePath;
+}
+
 + (AFHTTPSessionManager * __strong *)jsonSessionManager
 {
     static AFHTTPSessionManager* client = nil;
@@ -201,6 +274,36 @@
         client.responseSerializer = [AFHTTPResponseSerializer serializer];
     });
     return &client;
+}
+
++ (NSData * __strong *)clientCertificateData
+{
+    static NSData* data = nil;
+    return &data;
+}
+
+typedef NSString*(^CertificatePasswordBlock)();
+
++ (__strong CertificatePasswordBlock*)clientCertificatePasswordBlock
+{
+    static CertificatePasswordBlock block = nil;
+    return &block;
+}
+
++ (void)setClientCertificateNamed:(NSString*)name withPasswordBlock:(NSString*(^)())passwordBlock
+{
+    NSString* certPath = [NSBundle.mainBundle pathForResource:name ofType:@"p12"];
+    if(certPath == nil) {
+        {{ class_prefix }}LogError(@"Error setting client cert. File not found.");
+        return;
+    }
+    NSData *p12Data = [NSData dataWithContentsOfFile:certPath];
+    if(p12Data == nil) {
+        {{ class_prefix }}LogError(@"Error setting client cert. File could not be read.");
+        return;
+    }
+    *self.clientCertificateData = p12Data;
+    *self.clientCertificatePasswordBlock = passwordBlock;
 }
 
 + (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names
@@ -455,7 +558,7 @@
 
 #import "{{ class_name }}.h"
 #import "{{ class_name }}Builder.h"
-#import "AECPJSONable.h"
+#import "{{ class_prefix }}JSONable.h"
 #import <AFNetworking/AFNetworking.h>
 {%- set response_import = operation|response_type_import(class_prefix) -%}
 {%- if response_import != '' %}
@@ -536,7 +639,7 @@
 
 - (NSString*)URLString
 {
-    NSString* URLString = @"{{ swagger.basePath|remove_trailing_slash }}{{ operation.path_name }}";
+    NSString* URLString = [NSString stringWithFormat:@"%@%@", self.class.urlBasePath, @"{{ operation.path_name }}"];
     {% for param in operation|parameters_in('path') -%}
     {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname -%}
     URLString = [URLString stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string(varname) }}];
