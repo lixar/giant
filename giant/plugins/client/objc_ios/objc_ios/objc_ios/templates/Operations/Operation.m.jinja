@@ -23,6 +23,25 @@
 #define {{ class_prefix }}LogError(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
 #endif
 
+typedef void (^AFURLSessionTaskDidFinishCollectingMetricsBlock)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics* metrics);
+
+@interface AECPHTTPSessionManager : AFHTTPSessionManager
+
+@property (readwrite, nonatomic, copy) AFURLSessionTaskDidFinishCollectingMetricsBlock taskDidFinishCollectingMetricsBlock;
+
+@end
+
+@implementation AECPHTTPSessionManager
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didFinishCollectingMetrics:(NSURLSessionTaskMetrics *)metrics
+{
+    if (self.taskDidFinishCollectingMetricsBlock) {
+        self.taskDidFinishCollectingMetricsBlock(session, task, metrics);
+    }
+}
+
+@end
+
 @interface {{ class_prefix }}Operation ()
 
 @property (atomic, strong) NSURLSessionTask *task;
@@ -46,6 +65,30 @@
     return self;
 }
 
++ (NSUInteger)responseHeaderSize:(NSHTTPURLResponse*)response
+{
+    unsigned long long size = @"HTTP/1.1 200     ".length;
+    for(NSString* key in response.allHeaderFields) {
+        NSString* value = response.allHeaderFields[key];
+        size = size + key.length + value.length + @": ".length + 2;
+    }
+    return size;
+}
+
++ (NSUInteger)requestHeaderSize:(NSURLRequest*)request
+{
+    unsigned long long size = @"HTTP/1.1 200     ".length;
+    for(NSString* key in request.allHTTPHeaderFields) {
+        NSString* value = request.allHTTPHeaderFields[key];
+        size = size + key.length + value.length + @": ".length + 2;
+    }
+    size = size + @"Host: ".length + request.URL.host.length + 2;
+    size = size + @"Connection: keep-alive  ".length;
+    size = size + @"Accept: */*  ".length;
+    size = size + @"Content-Length: XXX  ".length;
+    return size;
+}
+
 - (void)setupDataTask
 {
     AFHTTPRequestSerializer *serializer;
@@ -60,15 +103,16 @@
         parameters = self.parameters;
     }
     
-    AFHTTPSessionManager* sessionManager;
+    {{ class_prefix }}HTTPSessionManager* sessionManager;
     if(self.isFileDownload) {
         sessionManager = [*self.class.jsonSessionManager copy];
     }
-    else if(self.produces != nil && [self.produces containsObject:@"text/html"]) {
-        sessionManager = [*self.class.httpSessionManager copy];
+    else if(self.produces.count == 0 || [self.produces[0] isEqualToString:@"application/json"]) {
+        sessionManager = [*self.class.jsonSessionManager copy];
     }
     else {
-        sessionManager = [*self.class.jsonSessionManager copy];
+        sessionManager = [*self.class.httpSessionManager copy];
+        sessionManager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:self.produces];
     }
 
     NSString* URLString = [NSURL URLWithString:self.URLString relativeToURL:sessionManager.baseURL].absoluteString;
@@ -114,7 +158,29 @@
         [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
     }
     
-    __weak AFURLSessionManager* weakSessionManager = sessionManager;
+    sessionManager.taskDidFinishCollectingMetricsBlock = ^(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics* taskMetrics) {
+        for(NSURLSessionTaskTransactionMetrics* metrics in taskMetrics.transactionMetrics) {
+            if(metrics.resourceFetchType == NSURLSessionTaskMetricsResourceFetchTypeLocalCache) {
+                if(weakSelf.class.cacheHitBlock != nil) {
+                    unsigned long long requestSize = weakSelf.task.countOfBytesSent + [weakSelf.class requestHeaderSize:task.currentRequest];
+                    unsigned long long responseSize = [weakSelf.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
+                    if(*weakSelf.class.cacheHitBlock != nil) {
+                        (*weakSelf.class.cacheHitBlock)(task.response.URL, requestSize, responseSize, weakSelf.task.countOfBytesReceived);
+                    }
+                }
+                AECPLogDebug(@"%@ Cache Hit", task.response.URL);
+                return;
+            }
+        }
+        unsigned long long requestSize = weakSelf.task.countOfBytesSent + [weakSelf.class requestHeaderSize:task.currentRequest];
+        unsigned long long responseSize = weakSelf.task.countOfBytesReceived + [weakSelf.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
+        if(*weakSelf.class.cacheMissBlock != nil) {
+            (*weakSelf.class.cacheMissBlock)(task.response.URL, requestSize, responseSize, 0);
+        }
+        AECPLogDebug(@"%@ Cache Miss", task.response.URL);
+    };
+    
+    __weak AECPHTTPSessionManager* weakSessionManager = sessionManager;
     [sessionManager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession * _Nonnull session, NSURLAuthenticationChallenge * _Nonnull challenge, NSURLCredential *__autoreleasing  _Nullable * _Nullable credential) {
         
         __strong AFURLSessionManager* strongSessionManager = weakSessionManager;
@@ -188,12 +254,19 @@
         else {
             {{ class_prefix }}LogInfo(@"Request succeeded.");
             if([responseObject isKindOfClass:NSData.class]) {
-                NSString* responseString = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:sessionManager.responseSerializer.stringEncoding];
-                if(responseString == nil) {
-                    responseString = [NSString stringWithCString:[((NSData*)responseObject) bytes] encoding:NSISOLatin1StringEncoding];
+                NSString* contentType = ((NSHTTPURLResponse*)response).allHeaderFields[@"Content-Type"];
+                if(contentType != nil && [weakSelf.class isTextContentType:contentType]) {
+                    NSString* responseString = [NSString stringWithCString:((NSData*)responseObject).bytes encoding:weakSessionManager.responseSerializer.stringEncoding];
+                    if(responseString == nil) {
+                        responseString = [NSString stringWithCString:[((NSData*)responseObject) bytes] encoding:NSISOLatin1StringEncoding];
+                    }
+                    {{ class_prefix }}LogDebug(@"Response: %@", responseString);
+                    weakSelf.responseObject = responseString;
                 }
-                weakSelf.responseObject = responseString;
-                {{ class_prefix }}LogDebug(@"Response: %@", responseString);
+                else {
+                    {{ class_prefix }}LogDebug(@"Response: %@", responseObject);
+                    weakSelf.responseObject = responseObject;
+                }
             }
             else {
                 {{ class_prefix }}LogDebug(@"Response: %@", responseObject);
@@ -201,6 +274,7 @@
             }
         }
         [weakSelf completeOperation];
+        [weakSessionManager invalidateSessionCancelingTasks:NO];
     };
     
     if(self.isFileDownload) {
@@ -232,11 +306,39 @@
      completionHandler:completion];
 }
 
++ (BOOL)isTextContentType:(NSString*)contentType
+{
+    for(NSString* testContentType in @[@"text/html", @"text/plain", @"text/css", @"text/javascript", @"application/javascript"]) {
+        if([contentType containsString:testContentType]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (NSString* __strong *)_urlRoot
+{
+    static NSString* urlRoot = HOSTNAME;
+    return &urlRoot;
+}
+
 + (void)setURLRoot:(NSString*)host
 {
-    *self.httpSessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
+    (*self._urlRoot) = [host copy];
+    if(*self.httpSessionManager != nil) {
+        [*self.httpSessionManager invalidateSessionCancelingTasks:NO];
+    }
+    if(*self.jsonSessionManager != nil) {
+        [*self.jsonSessionManager invalidateSessionCancelingTasks:NO];
+    }
+    *self.httpSessionManager = [[{{ class_prefix }}HTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
     (*self.httpSessionManager).responseSerializer = [AFHTTPResponseSerializer serializer];
-    *self.jsonSessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
+    *self.jsonSessionManager = [[{{ class_prefix }}HTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:host]];
+}
+
++ (NSString*)urlRoot
+{
+    return *self._urlRoot;
 }
 
 + (NSString* __strong *)_urlBasePath
@@ -260,7 +362,7 @@
     static AFHTTPSessionManager* client = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://localhost:10010"]];
+        client = [[{{ class_prefix }}HTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://localhost:10010"]];
     });
     return &client;
 }
@@ -270,10 +372,28 @@
     static AFHTTPSessionManager* client = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        client = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://localhost:10010"]];
+        client = [[{{ class_prefix }}HTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://localhost:10010"]];
         client.responseSerializer = [AFHTTPResponseSerializer serializer];
     });
     return &client;
+}
+
++ (__strong AECPCacheTrackingBlock*)cacheHitBlock
+{
+    static AECPCacheTrackingBlock block = nil;
+    return &block;
+}
+
++ (__strong AECPCacheTrackingBlock*)cacheMissBlock
+{
+    static AECPCacheTrackingBlock block = nil;
+    return &block;
+}
+
++ (void)setCacheTrackingBlocksOnHit:(AECPCacheTrackingBlock)onHit onMiss:(AECPCacheTrackingBlock)onMiss
+{
+    *self.cacheHitBlock = onHit;
+    *self.cacheMissBlock = onMiss;
 }
 
 + (NSData * __strong *)clientCertificateData
@@ -396,6 +516,11 @@ typedef NSString*(^CertificatePasswordBlock)();
     (*self.defaultHeaders)[header] = value;
 }
 
++ (void)deleteHeader:(NSString*)header
+{
+    [(*self.defaultHeaders) removeObjectForKey:header];
+}
+
 + (NSMutableDictionary* __strong *)defaultHeaders
 {
     static NSMutableDictionary* dict = nil;
@@ -442,7 +567,7 @@ typedef NSString*(^CertificatePasswordBlock)();
     return nil;
 }
 
-- (NSSet<NSString*>*)produces
+- (NSArray<NSString*>*)produces
 {
     [[NSException exceptionWithName:@"GiantError" reason:@"Operation cannot be instantiated directly. Use an Operation subclass." userInfo:@{}] raise];
     return nil;
@@ -704,13 +829,13 @@ typedef NSString*(^CertificatePasswordBlock)();
 
 {%- if 'produces' in operation %}
 
-- (NSSet<NSString*>*)produces
+- (NSArray<NSString*>*)produces
 {
-    return [NSSet setWithArray:@[
+    return @[
         {%- for mimetype in operation.produces %}
         @"{{ mimetype }}",
         {%- endfor %}
-    ]];
+    ];
 }
 {%- endif %}
 

@@ -105,3 +105,17 @@
 }
 
 @end
+
+@implementation NSData (AECPJSONable)
+
+- (id<AECPJSONable>)toJSON
+{
+    return self;
+}
+
++ (instancetype)fromJSON:(id<AECPJSONable>)json
+{
+    return [(NSURL *)json copy];
+}
+
+@end

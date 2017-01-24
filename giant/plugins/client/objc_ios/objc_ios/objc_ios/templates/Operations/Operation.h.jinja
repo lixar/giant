@@ -19,21 +19,26 @@
 @property (nonatomic, assign, readonly) BOOL isFileDownload;
 @property (nonatomic, copy, readonly) NSURL* filepath;
 @property (nonatomic, copy, readonly) NSString* securityDefinition;
-@property (nonatomic, copy, readonly) NSSet<NSString*>* produces;
+@property (nonatomic, copy, readonly) NSArray<NSString*>* produces;
 
 @end
 
 @class AFHTTPSessionManager, AFHTTPRequestSerializer;
 
+typedef void(^{{ class_prefix }}CacheTrackingBlock)(NSURL* url, NSUInteger requestBytes, NSUInteger responseBytes, NSUInteger savedBytes);
+
 @interface {{ class_prefix }}Operation: NSOperation <{{ class_prefix }}OperationProtocol>
 
 + (void)setURLRoot:(NSString*)host;
++ (NSString*)urlRoot;
 + (void)setURLBasePath:(NSString*)basePath;
 + (NSString*)urlBasePath;
 + (void)setApiKey:(NSString*)token forSecurityDefinition:(NSString*)securityName;
 + (void)setHeaderValue:(NSString*)value forHeader:(NSString*)header;
++ (void)deleteHeader:(NSString*)header;
 
 + (void)setClientCertificateNamed:(NSString*)name withPasswordBlock:(NSString*(^)())passwordBlock;
++ (void)setCacheTrackingBlocksOnHit:({{ class_prefix }}CacheTrackingBlock)onHit onMiss:({{ class_prefix }}CacheTrackingBlock)onMiss;
 
 + (void)pinPublicKeysForCertificatesNamed:(NSArray<NSString*>*)names;
 + (void)pinCertificatesNamed:(NSArray<NSString*>*)names;
