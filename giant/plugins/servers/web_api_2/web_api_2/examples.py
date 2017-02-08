@@ -69,5 +69,5 @@ swagger_to_csharp_example_map = {
             'double': lambda schema: str(example_float(schema)) + ';'
         }
     ),
-    'boolean': defaultdict(lambda: lambda schema: random.choice('true;', 'false;'))
+    'boolean': defaultdict(lambda: lambda schema: random.choice(('true;', 'false;')))
 }

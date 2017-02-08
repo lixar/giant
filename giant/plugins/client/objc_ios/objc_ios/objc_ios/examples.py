@@ -69,7 +69,7 @@ swagger_to_objc_example_map = {
             'double': lambda schema: "@" + str(example_float(schema))
         }
     ),
-    'boolean': defaultdict(lambda: lambda schema: random.choice('YES', 'NO')),
+    'boolean': defaultdict(lambda: lambda schema: random.choice(('YES', 'NO'))),
     'array': defaultdict(lambda: lambda schema: '@[]')
 }
 
@@ -96,7 +96,7 @@ swagger_to_objc_example_string_map = {
             'double': lambda schema: "@(" + str(example_float(schema)) + ').stringValue'
         }
     ),
-    'boolean': defaultdict(lambda: lambda schema: '@(' + random.choice('YES', 'NO') + ').stringValue'),
+    'boolean': defaultdict(lambda: lambda schema: '@(' + random.choice(('YES', 'NO')) + ').stringValue'),
     'array': defaultdict(lambda: lambda schema: '@"[]"')
 }
 
