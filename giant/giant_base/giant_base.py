@@ -211,6 +211,9 @@ class BaseGiant(IPlugin):
             if ('type' not in definition or definition['type'] == 'object') and 'properties' in definition:
                 for prop_name, prop in definition['properties'].iteritems():
                     prop['definition'] = definition
+            if ('type' not in definition or definition['type'] == 'object') and 'allOf' in definition:
+                for prop_name, prop in definition['allOf'][1]['properties'].iteritems():
+                    prop['definition'] = definition
                 
         template_variables = {
             'swagger': self.swagger,

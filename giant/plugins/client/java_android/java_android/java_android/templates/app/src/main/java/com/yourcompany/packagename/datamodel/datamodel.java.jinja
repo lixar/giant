@@ -12,18 +12,18 @@ import org.threeten.bp.OffsetDateTime;
 import java.util.ArrayList;
 
 public class {{ class_name }} {
-    {% if 'properties' in definition %}
-    {% for property_name, property in definition.properties.iteritems() -%}
+    {% if 'properties' in definition or 'allOf' in definition %}
+    {% for property_name, property in definition|definition_properties -%}
     @Json(name = "{{ property_name }}")
     private {{ property|android_property_type }} {{ property_name|camel_case }};
     {% endfor %}
-    {% for property_name, property in definition.properties.iteritems() -%}
+    {% for property_name, property in definition|definition_properties -%}
     public {{ property|android_property_type }} get{{ property_name|pascal_case }}() {
         return {{ property_name|camel_case }};
     }
     
     {% endfor -%}
-    {% for property_name, property in definition.properties.iteritems() -%}
+    {% for property_name, property in definition|definition_properties -%}
     public void set{{ property_name|pascal_case }}({{ property|android_property_type }} {{ property_name|camel_case }}) {
         this.{{ property_name|camel_case }} = {{ property_name|camel_case }};
     }

@@ -11,7 +11,7 @@ namespace {{ swagger.info.title|replace(' ', '') }}.Models
     [DataContract]
     public class {{ definition_name }}
     {
-        {% for property_name, property in definition.properties.iteritems() %}
+        {% for property_name, property in definition|definition_properties %}
         [DataMember(Name = "{{ property_name }}")]
         public {{ property|property_type }} {{ property_name|camel_to_pascal }} { get; set; }
         {% endfor %}

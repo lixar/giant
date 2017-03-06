@@ -1,6 +1,6 @@
 {% macro example_object(definition_name, definition, variable_name) %}
 var {{ variable_name }} = new {{ definition_name }}();
-{% for property_name, property in definition.properties.iteritems() -%}
+{% for property_name, property in definition|definition_properties -%}
 {{ variable_name }}.{{ property_name|camel_to_pascal }} = {{ example(property) }}
 {%- endfor %}
 {% endmacro %}

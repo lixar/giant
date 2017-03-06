@@ -7,56 +7,83 @@
 {{- ios.file_header(class_name) }}
 
 #import "{{ class_name }}.h"
-{%- if 'properties' in definition %}
-{%- for property_name, property in definition.properties.iteritems() %}
-{%- if property.type == 'array' and '$ref' in property['items'] %}
+{%- if 'properties' in definition or 'allOf' in definition %}
+{%-   for property_name, property in definition|definition_properties(true) %}
+{%-     if property.type == 'array' and '$ref' in property['items'] %}
+{%-       if 'polymorphic_type' in property %}
+#import "{{ class_prefix }}{{ property.polymorphic_type }}.h"
+{%-       else %}
 #import "{{ (property|array_definition_items_type(class_prefix))[:-2] }}.h"
-{%- elif (property.type == 'object' or 'type' not in property) and 'properties' in property %}
+{%-       endif %}
+{%-     elif (property.type == 'object' or 'type' not in property) and 'properties' in property %}
 #import "{{ (property|property_type)[:-2] }}.h"
+{%-     endif %}
+{%-   endfor -%}
 {%- endif %}
-{%- endfor -%}
+{%- if 'discriminator' in definition %}
+{%-   for type in definition['x-subtypes'] %}
+#import "{{ class_prefix }}{{ type }}.h"
+{%- endfor %}
 {%- endif %}
 {%- if 'x-relations' in definition %}
-{%- for relation_name, relation in definition['x-relations'].iteritems() if 'link' in relation %}
-{%- set prop_import = relation|realm_property_import(class_prefix) -%}
-{%- if prop_import is not none %}
+{%-   for relation_name, relation in definition['x-relations'].iteritems() if 'link' in relation %}
+{%-     set prop_import = relation|realm_property_import(class_prefix) -%}
+{%-     if prop_import is not none %}
 {{ prop_import }}
-{%- endif -%}
-{%- endfor %}
+{%-     endif -%}
+{%-   endfor %}
 {%- endif %}
 
 {%- if 'x-primary-key' in definition and definition['x-primary-key'] is not string %}
 @interface {{ class_name }} ()
 
 @property (nonatomic, strong) NSString* compositeKey;
-{%- for key in definition['x-primary-key'] %}
+{%-   for key in definition['x-primary-key'] %}
 @property (nonatomic, strong) NSString* {{ key|camel_case|objc_varname }}Value;
-{%- endfor %}
+{%-   endfor %}
 
 @end
 {%- endif %}
 
 @implementation {{ class_name }}
-{%- if 'properties' in definition %}
-{%- for property_name, property in definition.properties.iteritems() %}
-{%- if 'enum' in property and property.type == 'string' %}
-{% for enum in property.enum %}
+{%- if 'properties' in definition or 'allOf' in definition %}
+{%-   for property_name, property in definition|definition_properties %}
+{%-     if 'enum' in property and property.type == 'string' %}
+{%        for enum in property.enum %}
 NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_case }} = @"{{ enum }}";
-{%- endfor %}
-{%- endif %}
-{%- endfor %}
+{%-       endfor %}
+{%-     endif %}
+{%-   endfor %}
 {%- endif %}
 
 - (NSDictionary*)toJSON
 {
+    {%- if 'allOf' in definition -%}
+    NSMutableDictionary* json = [[super toJSON] mutableCopy];
+    {% else %}
     NSMutableDictionary* json = [NSMutableDictionary dictionary];
-    {%- if 'properties' in definition -%}
-    {%- for property_name, property in definition.properties.iteritems() %}
+    {%- endif -%}
+    {%- if 'properties' in definition or 'allOf' in definition -%}
+    {%- for property_name, property in definition|definition_properties(true) %}
     if(self.{{ property_name|camel_case|objc_varname }} != nil) {
       {%- if property.type == 'string' and property.format == 'date' %}
+        {%- if 'original_name' in property %}
+        if(json[@"{{ property['original_name'] }}"] == nil) {
+            json[@"{{ property['original_name'] }}"] = [NSMutableArray new];
+        }
+        [(NSMutableArray*)json[@"{{ property['original_name'] }}"] addObjectsFromArray:(NSArray*)[self.{{ property_name|camel_case|objc_varname }} toJSONWithFormat:@"yyyy-MM-dd"]];
+        {%- else %}
         json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSONWithFormat:@"yyyy-MM-dd"];
+        {%- endif %}
       {%- else %}
+        {%- if 'original_name' in property %}
+        if(json[@"{{ property['original_name'] }}"] == nil) {
+            json[@"{{ property['original_name'] }}"] = [NSMutableArray new];
+        }
+        [(NSMutableArray*)json[@"{{ property['original_name'] }}"] addObjectsFromArray:(NSArray*)[self.{{ property_name|camel_case|objc_varname }} toJSON]];
+        {%- else %}
         json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSON];
+        {%- endif %}
       {%- endif %}
     }
     {%- endfor -%}
@@ -66,21 +93,37 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 
 + (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
+    {% if 'discriminator' in definition -%}
+    {{ class_name }} *model;
+    {%-   for type in definition['x-subtypes'] %}
+    if([json[@"{{ definition.discriminator }}"] isEqualToString:@"{{ type }}"]) {
+        model = [{{ class_prefix }}{{ type }} fromJSON:json];
+    }
+    {%-   endfor %}
+    {%- else -%}
     {{ class_name }} *model = [self new];
-    {%- if 'properties' in definition -%}
-    {%- for property_name, property in definition.properties.iteritems() %}
-    if(json[@"{{ property_name }}"] != nil && ![json[@"{{ property_name }}"] isEqual:NSNull.null]) {
+    {%- endif -%}
+    {%- if 'properties' in definition or 'allOf' in definition -%}
+    {%- for property_name, property in definition|definition_properties(true) %}
+    {%- set prop_name = property['original_name'] or property_name %}
+    if(json[@"{{ prop_name }}"] != nil && ![json[@"{{ prop_name }}"] isEqual:NSNull.null]) {
     {%- if property.type == 'array' %}
         model.{{ property_name|camel_case|objc_varname }} = ^{
-            NSArray* array = json[@"{{ property_name }}"];
+            NSArray* array = json[@"{{ prop_name }}"];
             NSMutableArray* items = [NSMutableArray array];
             for(id<{{ class_prefix }}JSONable> jsonable in array) {
+                {%- if property.polymorphic_type|length > 0 %}
+                if([jsonable[@"{{ property.base_type.discriminator }}"] isEqualToString:@"{{ property.polymorphic_type }}"]) {
+                    [items addObject:[{{ class_prefix }}{{ property.polymorphic_type }} fromJSON:jsonable]];
+                }
+                {%- else %}
                 [items addObject:[{{ (property|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];
+                {%- endif %}
             }
             return [items copy];
         }();
     {%- else %}
-        model.{{ property_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
+        model.{{ prop_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- endif %}
     }
     {%- endfor -%}

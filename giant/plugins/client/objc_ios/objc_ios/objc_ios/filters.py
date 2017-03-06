@@ -176,6 +176,8 @@ def _realm_property_type(prop, prefix):
         return prefix + prop['name'] + ' *'
     value = _swagger_to_realm_map[prop['type']][prop.get('format')]
     if prop['type'] == 'array':
+        if 'polymorphic_type' in prop:
+            return 'RLMArray<{0}*><{0}> *'.format(prefix + prop['polymorphic_type'])
         if '$ref' in prop['items']:
             return value.format(object_type=prefix + prop['items']['$ref'].split('/')[-1])
         if 'x-ref' in prop['items']:
@@ -433,7 +435,9 @@ def _objc_property(param, prefix):
         param_type=param_type, 
         param_name=param_name)
         
-def _model_base_type(definition):
+def _model_base_type(definition, prefix):
+    if 'allOf' in definition:
+        return prefix + definition['allOf'][0]['$ref'].split('/')[-1]
     if 'x-persist' in definition:
         return 'RLMObject'
     else:
@@ -442,6 +446,8 @@ def _model_base_type(definition):
 def _realm_property_import(prop, prefix):
     prop = _get_property(prop)
     if prop['type'] == 'array':
+        if 'polymorphic_type' in prop:
+            return '#import "{}{}.h"'.format(prefix, prop['polymorphic_type'])
         prop = _get_property(prop['items'])
         if 'name' in prop:
             return '#import "{}{}.h"'.format(prefix, prop['name'])
@@ -509,11 +515,38 @@ def _error_response_type_import(operation, prefix):
             return '#import "' + prefix + schema['items']['$ref'].split('/')[-1] + '.h"'
     else:
         return ''
-    
+        
+def _definition_properties(definition, include_subtypes=False):
+    if 'allOf' in definition:
+        properties = definition['allOf'][1]['properties'].iteritems()
+    else:
+        properties = definition['properties'].iteritems()
+    if not include_subtypes:
+        return properties
+        
+    all_props = {}
+    for prop_name, dict_prop in properties:
+        prop = _get_property(dict_prop)
+        if prop['type'] == 'array':
+            subprop = _get_property(prop['items'])
+            if 'discriminator' in subprop:
+                for subtype in subprop['x-subtypes']:
+                    dict_prop_copy = dict(dict_prop)
+                    dict_prop_copy['original_name'] = prop_name
+                    dict_prop_copy['polymorphic_type'] = subtype
+                    dict_prop_copy['base_type'] = subprop
+                    all_props[base_filters.camel_case(subtype + '_' + prop_name)] = dict_prop_copy
+            else:
+                all_props[prop_name] = dict_prop
+        else:
+            all_props[prop_name] = dict_prop
+            
+    return all_props.iteritems()
 
 filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('ios_datamodel_attribute_type', _ios_datamodel_attribute_type),
     ('property_type', _property_type),
+    ('realm_property_type', _realm_property_type),
     ('template_string_in_af_format', _template_string_in_af_format),
     ('example_primitive', _example_primitive),
     ('example_primitive_string', _example_primitive_string),
@@ -539,7 +572,8 @@ filters = (('ios_attribute_optional', _ios_attribute_optional),
     ('error_response_types', _error_response_types),
     ('error_response_type', _error_response_type),
     ('error_response_type_import', _error_response_type_import),
-    ('error_response_type_forward_decl', _error_response_type_forward_decl)
+    ('error_response_type_forward_decl', _error_response_type_forward_decl),
+    ('definition_properties', _definition_properties)
 )
     
     

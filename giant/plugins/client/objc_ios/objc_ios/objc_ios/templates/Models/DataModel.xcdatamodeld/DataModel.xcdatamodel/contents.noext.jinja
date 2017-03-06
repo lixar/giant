@@ -5,8 +5,8 @@
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10171" systemVersion="15C50" minimumToolsVersion="Automatic">
     {% for definition_name, definition in swagger.definitions.iteritems() if definition.type == 'object' %}
     <entity name="{{ definition_name }}" syncable="YES">
-        {% if 'properties' in definition %}
-        {% for property_name, property in definition.properties.iteritems() if (property|get_property).type != 'array' and (property|get_property).type != 'object' %}
+        {% if 'properties' in definition or 'allOf' in definition %}
+        {% for property_name, property in definition|definition_properties if (property|get_property).type != 'array' and (property|get_property).type != 'object' %}
         <attribute name="{{- property_name }}" optional="{{ definition|ios_attribute_optional(property_name) }}" attributeType="{{ property|ios_datamodel_attribute_type }}" syncable="YES"/>
         {%- endfor %}
         {% endif %}
