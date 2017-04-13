@@ -21,5 +21,6 @@
 @interface NSDate ({{ class_prefix }}JSONable) <{{ class_prefix }}JSONable>
 
 - (id<{{ class_prefix }}JSONable>)toJSONWithFormat:(NSString*)format;
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json withFormat:(NSString*)format;
 
 @end
