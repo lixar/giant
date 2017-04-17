@@ -45,6 +45,21 @@
 
 @implementation NSDate ({{ class_prefix }}JSONable)
 
++ (NSDateFormatter*)dateFormatterForFormat:(NSString*)format
+{
+    static NSMutableDictionary* formatters;
+    if (formatters == nil) {
+        formatters = [NSMutableDictionary new];
+    }
+    NSDateFormatter* formatter = formatters[format];
+    if(formatter == nil) {
+        formatter = [NSDateFormatter new];
+        formatter.dateFormat = format;
+        formatters[format] = formatter;
+    }
+    return formatter;
+}
+
 - (id<{{ class_prefix }}JSONable>)toJSON
 {
     return self.{{ class_prefix }}_iso8601;
@@ -52,14 +67,19 @@
 
 - (id<{{ class_prefix }}JSONable>)toJSONWithFormat:(NSString*)format
 {
-    NSDateFormatter* dateFormatter = [NSDateFormatter new];
-    dateFormatter.dateFormat = format;
+    NSDateFormatter* dateFormatter = [self.class dateFormatterForFormat:format];
     return [dateFormatter stringFromDate:self];
 }
 
 + (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
     return [NSDate {{ class_prefix }}_dateWithISO8601String:(NSString *)json];
+}
+
++ (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json withFormat:(NSString*)format
+{
+    NSDateFormatter* dateFormatter = [self dateFormatterForFormat:format];
+    return [dateFormatter dateFromString:(NSString *)json];
 }
 
 @end

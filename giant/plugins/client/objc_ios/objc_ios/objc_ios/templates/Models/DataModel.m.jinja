@@ -122,6 +122,8 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
             }
             return [items copy];
         }();
+    {%- elif property.type == 'string' and property.format == 'date' %}
+        model.{{ prop_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"] withFormat:@"yyyy-MM-dd"];
     {%- else %}
         model.{{ prop_name|camel_case|objc_varname }} = [{{ (property|property_type(class_prefix))[:-2] }} fromJSON:json[@"{{ property_name }}"]];
     {%- endif %}
