@@ -58,7 +58,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 
 - (NSDictionary*)toJSON
 {
-    {%- if 'allOf' in definition -%}
+    {%- if 'allOf' in definition %}
     NSMutableDictionary* json = [[super toJSON] mutableCopy];
     {% else %}
     NSMutableDictionary* json = [NSMutableDictionary dictionary];
@@ -93,14 +93,14 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 
 + (instancetype)fromJSON:(id<{{ class_prefix }}JSONable>)json
 {
-    {% if 'discriminator' in definition -%}
+    {%- if 'discriminator' in definition %}
     {{ class_name }} *model;
     {%-   for type in definition['x-subtypes'] %}
     if([json[@"{{ definition.discriminator }}"] isEqualToString:@"{{ type }}"]) {
         model = [{{ class_prefix }}{{ type }} fromJSON:json];
     }
     {%-   endfor %}
-    {%- else -%}
+    {%- else %}
     {{ class_name }} *model = [self new];
     {%- endif -%}
     {%- if 'properties' in definition or 'allOf' in definition -%}
@@ -114,7 +114,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
             for(id<{{ class_prefix }}JSONable> jsonable in array) {
                 {%- if property.polymorphic_type|length > 0 %}
                 if([jsonable[@"{{ property.base_type.discriminator }}"] isEqualToString:@"{{ property.polymorphic_type }}"]) {
-                    [items addObject:[{{ class_prefix }}{{ property.polymorphic_type }} fromJSON:jsonable]];
+                    [items addObject:[{{ class_prefix }}{{ property.base_type.name }} fromJSON:jsonable]];
                 }
                 {%- else %}
                 [items addObject:[{{ (property|array_definition_items_type(class_prefix))[:-2] }} fromJSON:jsonable]];

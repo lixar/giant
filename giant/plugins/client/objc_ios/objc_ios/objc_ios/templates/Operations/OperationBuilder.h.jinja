@@ -8,10 +8,12 @@
 
 @class {{ class_prefix }}Operation;
 
-@protocol {{ class_name }} <NSCopying>
+@protocol {{ class_name }} <NSCopying, NSObject>
 
 @required
 - ({{ class_prefix }}Operation *)build;
+
+@property (nonatomic, copy, readonly) NSDictionary* customHeaders;
 
 @end
 
@@ -31,9 +33,10 @@
 @interface {{ class_name }}: NSObject <{{ class_prefix }}OperationBuilder>
 
 - ({{ class_name[:-7] }} *)build;
-{% for param in operation.parameters if 'x-giant-ignore' not in param %}
+{%- for param in operation.parameters if 'x-giant-ignore' not in param %}
 {{ param|objc_property(class_prefix) }}
-{% endfor -%}
+{%- endfor %}
+@property (nonatomic, copy) NSDictionary* customHeaders;
 {%- if (operation|response_schema).type == 'file' %}
 @property (nonatomic, copy) NSURL* filepath;
 {% endif %}

@@ -8,7 +8,7 @@
 
 @protocol {{ class_prefix }}OperationProtocol <NSObject>
 
-+ (instancetype)operationWithBuilderBlock:(void(^)(id<{{ class_prefix }}OperationBuilder> *builder))builderBlock;
++ (instancetype)operationWithBuilderBlock:(void(^)(id<{{ class_prefix }}OperationBuilder> builder))builderBlock;
 
 @property (nonatomic, copy, readonly) NSString* method;
 @property (nonatomic, copy, readonly) NSString* URLString;
@@ -52,6 +52,7 @@ typedef void(^{{ class_prefix }}CacheTrackingBlock)(NSURL* url, NSUInteger reque
 @property (nonatomic, strong) NSURLResponse* response;
 @property (nonatomic, strong) id responseObject;
 @property (nonatomic, strong) id errorResponseObject;
+@property (nonatomic, assign) BOOL isCachedResponse;
 
 @end
 

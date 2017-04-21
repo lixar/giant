@@ -30,6 +30,7 @@
   {%- if (operation|response_schema).type == 'file' %}
   copy.filepath = self.filepath;
   {% endif %}
+  copy.customHeaders = [self.customHeaders copy];
   return copy;
 }
 

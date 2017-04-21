@@ -47,11 +47,13 @@ typedef void (^AFURLSessionTaskDidFinishCollectingMetricsBlock)(NSURLSession *se
 @property (atomic, strong) NSURLSessionTask *task;
 @property (nonatomic, getter = isFinished, readwrite)  BOOL finished;
 @property (nonatomic, getter = isExecuting, readwrite) BOOL executing;
+@property (nonatomic, copy) id<AECPOperationBuilder> builder;
 
 @end
 
 @implementation {{ class_prefix }}Operation
 
+@dynamic builder;
 @synthesize finished  = _finished;
 @synthesize executing = _executing;
 
@@ -158,24 +160,30 @@ typedef void (^AFURLSessionTaskDidFinishCollectingMetricsBlock)(NSURLSession *se
         [request setValue:self.class.apiKeys[self.securityDefinition] forHTTPHeaderField:@"Authorization"];
     }
     
+    for(NSString* key in self.builder.customHeaders) {
+        [request setValue:self.builder.customHeaders[key] forHTTPHeaderField:key];
+    }
+    
+    @weakify(self);
     sessionManager.taskDidFinishCollectingMetricsBlock = ^(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics* taskMetrics) {
+        STRENGTHEN_SELF_OR_RETURN_VOID
         for(NSURLSessionTaskTransactionMetrics* metrics in taskMetrics.transactionMetrics) {
             if(metrics.resourceFetchType == NSURLSessionTaskMetricsResourceFetchTypeLocalCache) {
-                if(weakSelf.class.cacheHitBlock != nil) {
-                    unsigned long long requestSize = weakSelf.task.countOfBytesSent + [weakSelf.class requestHeaderSize:task.currentRequest];
-                    unsigned long long responseSize = [weakSelf.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
-                    if(*weakSelf.class.cacheHitBlock != nil) {
-                        (*weakSelf.class.cacheHitBlock)(task.response.URL, requestSize, responseSize, weakSelf.task.countOfBytesReceived);
+                if(self.class.cacheHitBlock != nil) {
+                    unsigned long long requestSize = self.task.countOfBytesSent + [self.class requestHeaderSize:task.currentRequest];
+                    unsigned long long responseSize = [self.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
+                    if(*self.class.cacheHitBlock != nil) {
+                        (*self.class.cacheHitBlock)(task.response.URL, requestSize, responseSize, self.task.countOfBytesReceived);
                     }
                 }
                 AECPLogDebug(@"%@ Cache Hit", task.response.URL);
                 return;
             }
         }
-        unsigned long long requestSize = weakSelf.task.countOfBytesSent + [weakSelf.class requestHeaderSize:task.currentRequest];
-        unsigned long long responseSize = weakSelf.task.countOfBytesReceived + [weakSelf.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
-        if(*weakSelf.class.cacheMissBlock != nil) {
-            (*weakSelf.class.cacheMissBlock)(task.response.URL, requestSize, responseSize, 0);
+        unsigned long long requestSize = self.task.countOfBytesSent + [self.class requestHeaderSize:task.currentRequest];
+        unsigned long long responseSize = self.task.countOfBytesReceived + [self.class responseHeaderSize:(NSHTTPURLResponse*)task.response];
+        if(*self.class.cacheMissBlock != nil) {
+            (*self.class.cacheMissBlock)(task.response.URL, requestSize, responseSize, 0);
         }
         AECPLogDebug(@"%@ Cache Miss", task.response.URL);
     };
@@ -232,6 +240,17 @@ typedef void (^AFURLSessionTaskDidFinishCollectingMetricsBlock)(NSURLSession *se
         else {
             return NSURLSessionAuthChallengePerformDefaultHandling;
         }
+    }];
+    
+    self.isCachedResponse = NO;
+    [sessionManager setDataTaskWillCacheResponseBlock:^NSCachedURLResponse * _Nonnull(NSURLSession * _Nonnull session, NSURLSessionDataTask * _Nonnull dataTask, NSCachedURLResponse * _Nonnull proposedResponse) {
+        NSCachedURLResponse* cachedResponse = [session.configuration.URLCache cachedResponseForRequest:dataTask.currentRequest];
+        if(cachedResponse != nil) {
+            NSString* cachedEtag = ((NSHTTPURLResponse*)cachedResponse.response).allHeaderFields[@"Etag"];
+            NSString* newEtag = ((NSHTTPURLResponse*)proposedResponse.response).allHeaderFields[@"Etag"];
+            self.isCachedResponse = cachedEtag != nil && newEtag != nil && [cachedEtag isEqualToString:newEtag];
+        }
+        return proposedResponse;
     }];
     
     void(^completion)(NSURLResponse * _Nonnull, id  _Nullable, NSError * _Nullable) = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
@@ -619,7 +638,7 @@ typedef NSString*(^CertificatePasswordBlock)();
 }
 
 - (void)cancel
- {
+{
     [self.task cancel];
     [super cancel];
 }
@@ -766,7 +785,7 @@ typedef NSString*(^CertificatePasswordBlock)();
 {
     NSString* URLString = [NSString stringWithFormat:@"%@%@", self.class.urlBasePath, @"{{ operation.path_name }}"];
     {% for param in operation|parameters_in('path') -%}
-    {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname -%}
+    {%- set varname = 'self.builder.' + param.name|camel_case|objc_varname %}
     URLString = [URLString stringByReplacingOccurrencesOfString:@"{{ '{' + param.name + '}'}}" withString:{{ param|type_to_string(varname) }}];
     {%- endfor %}
     {%- set query_params = operation|parameters_in('query') %}
