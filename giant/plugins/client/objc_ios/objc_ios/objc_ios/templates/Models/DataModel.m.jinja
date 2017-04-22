@@ -66,7 +66,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
     {%- if 'properties' in definition or 'allOf' in definition -%}
     {%- for property_name, property in definition|definition_properties(true) %}
     if(self.{{ property_name|camel_case|objc_varname }} != nil) {
-      {%- if property.type == 'string' and property.format == 'date' %}
+    {%- if property.type == 'string' and property.format == 'date' %}
         {%- if 'original_name' in property %}
         if(json[@"{{ property['original_name'] }}"] == nil) {
             json[@"{{ property['original_name'] }}"] = [NSMutableArray new];
@@ -75,7 +75,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
         {%- else %}
         json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSONWithFormat:@"yyyy-MM-dd"];
         {%- endif %}
-      {%- else %}
+    {%- else %}
         {%- if 'original_name' in property %}
         if(json[@"{{ property['original_name'] }}"] == nil) {
             json[@"{{ property['original_name'] }}"] = [NSMutableArray new];
@@ -84,7 +84,7 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
         {%- else %}
         json[@"{{ property_name }}"] = [self.{{ property_name|camel_case|objc_varname }} toJSON];
         {%- endif %}
-      {%- endif %}
+    {%- endif %}
     }
     {%- endfor -%}
     {%- endif %}
@@ -136,11 +136,11 @@ NSString * const {{ class_name }}{{ property_name|pascal_case }}{{ enum|pascal_c
 
 + (NSDictionary *)linkingObjectsProperties {
     return @{ 
-      {%- for relation_name, relation in definition['x-relations'].iteritems() %}
-      {%- if 'link' in relation %}
-      @"{{ relation_name|camel_case|objc_varname }}": [RLMPropertyDescriptor descriptorWithClass:{{ (relation|property_type(class_prefix, true))[:-2] }}.class propertyName:@"{{ relation['link'] }}"],
-      {%- endif %}
-      {%- endfor %}
+        {%- for relation_name, relation in definition['x-relations'].iteritems() %}
+        {%- if 'link' in relation %}
+        @"{{ relation_name|camel_case|objc_varname }}": [RLMPropertyDescriptor descriptorWithClass:{{ (relation|property_type(class_prefix, true))[:-2] }}.class propertyName:@"{{ relation['link'] }}"],
+        {%- endif %}
+        {%- endfor %}
     };
 }
 {%- endif %}
